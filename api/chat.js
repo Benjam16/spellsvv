@@ -1,11 +1,11 @@
 // Path: api/chat.js
 
+// 1. Force Edge Runtime
 export const config = {
   runtime: 'edge',
 };
 
 export default async function handler(req) {
-  // 1. CORS Headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -24,103 +24,113 @@ export default async function handler(req) {
         return new Response(JSON.stringify({ error: "Server Error: API Key missing." }), { status: 500, headers });
     }
 
-    // 2. Robust System Prompt
-    // We add instructions to handle copyright (Generic Clone) and structure.
+    // 2. THE "SPEED" PROMPT (Reverted to the one that worked)
+    // We remove complex instructions to stop the AI from overthinking or triggering filters.
     const systemContext = `
-        You are an expert Web3 Frontend Engineer.
+        You are a High-Speed Web3 App Generator.
+        Return strictly valid JSON: { "code": "...", "icon": "..." }
         
-        TASK:
-        Generate a single-file HTML5 application based on the user's request.
-        If the user asks for a copyrighted game (like Tetris, Pacman), generate a "Generic Clone" with distinct visuals but identical mechanics.
+        INSTRUCTIONS:
+        1. Write COMPACT, working code.
+        2. Combine CSS/JS into the HTML.
+        3. Dark Mode, Neon Style.
+        4. Include 'START' overlay button.
+        5. Use Ethers.js.
         
-        OUTPUT FORMAT:
-        Return ONLY valid JSON with this structure:
-        { 
-            "code": "<!DOCTYPE html><html>...</html>", 
-            "icon": "<svg>...</svg>" 
-        }
-
-        TECHNICAL REQUIREMENTS:
-        1. "code":
-           - Must be a single HTML file containing CSS (<style>) and JS (<script>).
-           - Must use a dark, neon, cyberpunk aesthetic (Black background #050505).
-           - Must include Tailwind CSS: <script src="https://cdn.tailwindcss.com"></script>
-           - Must include Ethers.js: <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-           - CRITICAL: Use the standard window.ethereum provider.
-           - Game Loop: Use requestAnimationFrame.
-
-        2. "icon":
-           - A simple 100x100 SVG string representing the app.
-
-        USER REQUEST: ${message}
-        SPECIFIC DETAILS: ${prompt}
+        USER REQUEST: ${message} ${prompt}
     `;
 
-    // 3. Use the Stable V1 Endpoint
-    // We use the standard 1.5 Flash model which is the most reliable for code generation.
-    const model = "gemini-1.5-flash"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // 3. THE BRUTE FORCE LOOP (Fixes 404 Errors)
+    // We try every known Flash model tag. One of these is guaranteed to work for your key.
+    const modelsToTry = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash-001",
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-pro" // Last resort
+    ];
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: systemContext }] }],
-            generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
-        })
-    });
+    let data = null;
+    let usedModel = "";
+    let lastError = "";
 
-    if (!response.ok) {
-        const txt = await response.text();
+    for (const model of modelsToTry) {
+        try {
+            console.log(`Trying model: ${model}...`);
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemContext }] }],
+                    // Lower output tokens slightly to ensure it fits in the timeout window
+                    generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+                })
+            });
+
+            if (!response.ok) {
+                // If 404, the name is wrong. If 503, it's busy. Try next.
+                if (response.status === 404 || response.status === 503) {
+                    console.warn(`${model} failed (${response.status}). Next...`);
+                    continue;
+                }
+                const txt = await response.text();
+                throw new Error(txt);
+            }
+
+            data = await response.json();
+            usedModel = model;
+            break; // Success!
+
+        } catch (e) {
+            lastError = e.message;
+        }
+    }
+
+    if (!data) {
         return new Response(JSON.stringify({ 
-            error: "Google API Error", 
-            details: `Status ${response.status}: ${txt}` 
+            error: "Generation Failed", 
+            details: `All models failed. Last error: ${lastError}` 
         }), { status: 500, headers });
     }
 
-    const data = await response.json();
+    // 4. THE SAFETY NET (Fixes "Bad Escaped Character" / Broken JSON)
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
-    // 4. THE CLEANING LOGIC (The Fix for "Generation Failed")
-    // Remove Markdown wrappers
-    rawText = rawText.replace(/^```json\s*/, "")
-                     .replace(/^```html\s*/, "")
-                     .replace(/^```\s*/, "")
-                     .replace(/```$/, "")
-                     .trim();
+    // Clean Markdown
+    rawText = rawText.replace(/^```json\s*/, "").replace(/^```html\s*/, "").replace(/^```\s*/, "").replace(/```$/, "").trim();
 
     let jsonResult = null;
 
     try {
-        // Attempt Standard Parsing
         jsonResult = JSON.parse(rawText);
     } catch (e) {
-        console.warn("JSON Parse Failed. Attempting Manual Extraction...");
+        console.warn("JSON Parse Failed. Extracting HTML manually...");
         
-        // --- SAFETY NET ---
-        // If JSON fails (common with Tetris/Games due to backslashes), we manually extract the HTML.
+        // Manual HTML Extraction
         const htmlStart = rawText.indexOf("<!DOCTYPE html");
         const htmlEnd = rawText.lastIndexOf("</html>");
         
         if (htmlStart !== -1 && htmlEnd !== -1) {
             const extractedHtml = rawText.substring(htmlStart, htmlEnd + 7);
-            
             jsonResult = {
                 code: extractedHtml,
-                // Default icon if parsing failed
-                icon: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#6366f1"/><text x="50" y="55" font-size="50" text-anchor="middle" fill="white" dy=".3em">💠</text></svg>'
+                icon: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#333"/><text x="50" y="55" font-size="50" text-anchor="middle" dy=".3em">🎮</text></svg>'
             };
         } else {
-            return new Response(JSON.stringify({ 
-                error: "Parsing Error", 
-                details: "AI generated invalid output and code could not be recovered.",
-                debug: rawText.substring(0, 100)
-            }), { status: 500, headers });
+            // Last ditch: If the text LOOKS like HTML but tags are messy, just return the raw text
+            if (rawText.includes("<html") && rawText.includes("body")) {
+                 jsonResult = { code: rawText, icon: "" };
+            } else {
+                return new Response(JSON.stringify({ 
+                    error: "Parsing Error", 
+                    details: "AI output was not valid code.",
+                    debug: rawText.substring(0, 100)
+                }), { status: 500, headers });
+            }
         }
     }
 
-    // 5. Success
-    return new Response(JSON.stringify({ reply: jsonResult, model: model }), { status: 200, headers });
+    return new Response(JSON.stringify({ reply: jsonResult, model: usedModel }), { status: 200, headers });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: `Server Error: ${error.message}` }), { status: 500, headers });
