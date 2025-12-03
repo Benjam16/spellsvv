@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DataContainer {
+    string public data;
+    constructor(string memory _data) { data = _data; }
+}
+
+contract SpellsProtocolV4 {
+    struct App {
+        string name;
+        address dataPointer;
+        string imageURI;
+        string category; // NEW: Stores "Game", "DeFi", "Tool", etc.
+        uint256 price;
+        address creator;
+        uint256 timestamp; // NEW: For sorting by date
+    }
+
+    uint256 public appCount = 0;
+    mapping(uint256 => App) public apps;
+    mapping(uint256 => mapping(address => bool)) public hasAccess;
+
+    uint256 public creationFee = 50 ether; 
+    address payable public owner;
+
+    constructor() { owner = payable(msg.sender); }
+
+    // Create with Category
+    function createApp(string memory _name, string memory _code, string memory _image, string memory _category, uint256 _price) public payable {
+        require(msg.value >= creationFee, "Fee 50 MON");
+        payable(owner).transfer(msg.value);
+
+        DataContainer container = new DataContainer(_code);
+        appCount++;
+        // Store category and timestamp
+        apps[appCount] = App(_name, address(container), _image, _category, _price, msg.sender, block.timestamp);
+        hasAccess[appCount][msg.sender] = true;
+    }
+
+    function updateApp(uint256 _id, string memory _newCode) public {
+        require(msg.sender == apps[_id].creator, "Only Creator");
+        DataContainer container = new DataContainer(_newCode);
+        apps[_id].dataPointer = address(container);
+    }
+
+    function buyApp(uint256 _id) public payable {
+        require(msg.value >= apps[_id].price, "Insufficient MON");
+        payable(apps[_id].creator).transfer(msg.value);
+        hasAccess[_id][msg.sender] = true;
+    }
+
+    // Updated to return category and timestamp
+    function getAppInfo(uint256 _id) public view returns (string memory, uint256, address, string memory, string memory, uint256) {
+        App memory a = apps[_id];
+        return (a.name, a.price, a.creator, a.imageURI, a.category, a.timestamp);
+    }
+
+    function getCode(uint256 _id) public view returns (string memory) {
+        require(hasAccess[_id][msg.sender], "Access Denied");
+        DataContainer container = DataContainer(apps[_id].dataPointer);
+        return container.data();
+    }
+}

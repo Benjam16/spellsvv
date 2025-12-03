@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+        =================================================================
+        SPELLS PROTOCOL V4 - DECENTRALIZED APP MARKETPLACE INTERFACE
+        =================================================================
+        Author: Spells Protocol Team
+        Version: 4.0.0 (Stable)
+        Network: Monad Testnet
+        Dependencies: Ethers.js, TailwindCSS, LZ-String, Lucide Icons
+    -->
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="No-Code AI App Generator on Monad Blockchain">
+    <title>Spells Protocol V4 | Monad</title>
+    
+    <!-- 
+        FAVICON SYSTEM
+        Uses a Data URI SVG to ensure the icon loads instantly 
+        without requiring an external server request.
+    -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+
+    <!-- ================================================================= -->
+    <!--                       EXTERNAL LIBRARIES                          -->
+    <!-- ================================================================= -->
+    
+    <!-- Tailwind CSS: Used for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Ethers.js v5.7.2: Handles Wallet Connection and Smart Contract Calls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    
+    <!-- LZ-String: Handles Compression/Decompression of HTML code to save Gas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    
+    <!-- Lucide Icons: Lightweight SVG icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts: 'VT323' for the retro terminal aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 
+           =================================================================
+           GLOBAL CSS VARIABLES & THEME CONFIGURATION
+           =================================================================
+        */
+        :root {
+            /* Background Colors */
+            --bg-dark: #050505;
+            --panel-glass: rgba(20, 20, 25, 0.95);
+            
+            /* Borders */
+            --border-color: #333333;
+            
+            /* Brand Palette - Cyberpunk Theme */
+            --accent-purple: #9d4edd;
+            --accent-pink: #f72585;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            
+            /* Typography */
+            --text-font: 'VT323', monospace;
+        }
+        
+        /* 
+           =================================================================
+           CORE LAYOUT STYLES
+           =================================================================
+        */
+        body { 
+            background-color: var(--bg-dark);
+            color: #e2e8f0; 
+            font-family: var(--text-font); 
+            font-size: 1.3rem;
+            overflow: hidden; /* Prevents double scrollbars */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* The Canvas for the Rain Animation */
+        #rainCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind everything */
+            pointer-events: none; /* Allows clicking through */
+        }
+
+        /* The Main Flexbox Wrapper */
+        #main-ui {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Sidebar Layout */
+        aside { 
+            z-index: 50; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+
+        /* 
+           =================================================================
+           CUSTOM SCROLLBARS
+           =================================================================
+        */
+        ::-webkit-scrollbar { 
+            width: 8px; 
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track { 
+            background: #1a1a2e; 
+        }
+
+        ::-webkit-scrollbar-thumb { 
+            background: var(--accent-purple); 
+            border-radius: 4px; 
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-pink);
+        }
+
+        /* 
+           =================================================================
+           GLASSMORPHISM PANELS
+           =================================================================
+        */
+        .glass-panel {
+            background: var(--panel-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(157, 78, 221, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 20px rgba(247, 37, 133, 0.2);
+        }
+
+        /* 
+           =================================================================
+           KEYFRAME ANIMATIONS
+           =================================================================
+        */
+
+        /* Floating effect for Potion/Logo */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .float-anim { 
+            animation: float 5s ease-in-out infinite; 
+        }
+        
+        /* Neon Glow Pulse */
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #9d4edd; }
+            50% { box-shadow: 0 0 25px #f72585; }
+            100% { box-shadow: 0 0 5px #9d4edd; }
+        }
+        
+        .glow-effect { 
+            animation: glow 3s infinite; 
+        }
+        
+        /* Pop-In Entrance for Modals */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .pop-in { 
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+
+        /* 
+           =================================================================
+           NAVIGATION & BUTTONS
+           =================================================================
+        */
+        .nav-item {
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            transition: all 0.2s ease;
+            border-right: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(157,78,221,0.2) 0%, rgba(0,0,0,0) 100%);
+            border-left: 4px solid var(--accent-pink);
+            color: white;
+            text-shadow: 0 0 8px var(--accent-pink);
+        }
+        
+        /* Filter Buttons for the Indexer */
+        .filter-btn {
+            border: 1px solid #333;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn.active {
+            background-color: #9d4edd;
+            border-color: #f72585;
+            color: white;
+            text-shadow: 0 0 5px white;
+        }
+        
+        /* 
+           =================================================================
+           IMAGE & IFRAME UTILITIES
+           =================================================================
+        */
+        
+        /* Ensures SVG icons generated by AI fill their container perfectly */
+        .spell-icon svg { 
+            width: 100%; 
+            height: 100%; 
+            border-radius: 0.5rem;
+            image-rendering: pixelated;
+        }
+
+        /* Image Fallback System */
+        img.error { 
+            display: none !important; 
+        }
+        
+        /* Shows the emoji if the PNG fails to load */
+        img.error + .fallback-emoji { 
+            display: block !important; 
+        }
+        
+        .fallback-emoji {
+            display: none;
+            font-size: 4rem;
+            text-align: center;
+            margin: 0 auto;
+        }
+        
+        /* App Runner Iframe Background */
+        #appFrame { 
+            background: #fff; 
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BACKGROUND CANVAS (RAIN EFFECT) -->
+    <canvas id="rainCanvas"></canvas>
+
+    <!-- MAIN UI WRAPPER -->
+    <div id="main-ui">
+        
+        <!-- 
+           =================================================================
+           LEFT SIDEBAR (NAVIGATION)
+           =================================================================
+        -->
+        <aside class="w-72 flex-shrink-0 bg-black/90 border-r border-purple-900/50 backdrop-blur-xl">
+            
+            <!-- LOGO & BRANDING -->
+            <div>
+                <div class="p-8 text-center border-b border-purple-900/50 bg-purple-900/10">
+                    
+                    <!-- Image with Error Handler (Swaps to Emoji if file missing) -->
+                    <div class="flex justify-center mb-4">
+                        <img src="potion.png" class="w-20 h-20 object-contain float-anim pixel-rendering" alt="Potion" onerror="this.classList.add('error')">
+                        <div class="fallback-emoji float-anim text-6xl">🧪</div>
+                    </div>
+
+                    <h1 class="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 font-bold tracking-widest leading-none">SPELLS</h1>
+                    <p class="text-sm text-purple-300 tracking-[0.4em] mt-2 font-bold opacity-80">PROTOCOL V4</p>
+                </div>
+
+                <!-- NAVIGATION MENU -->
+                <nav class="mt-8 flex flex-col gap-1 px-2">
+                    <button onclick="switchTab('marketplace')" id="nav-marketplace" class="nav-item active w-full flex items-center gap-4 px-6 py-4 text-gray-400 hover:text-white transition group rounded-r-lg">
+                        <i data-lucide="grid" class="group-hover:text-pink-500 transition"></i> Marketplace
+                    </button>
+                    
+                    <button onclick="switchTab('builder')" id="nav-builder" class="nav-item w-full flex items-center gap-4 px-6 py-4 text-gray-400 hover:text-white transition group rounded-r-lg">
+                        <i data-lucide="flask-conical" class="group-hover:text-pink-500 transition"></i> Laboratory
+                    </button>
+                    
+                    <button onclick="switchTab('docs')" id="nav-docs" class="nav-item w-full flex items-center gap-4 px-6 py-4 text-gray-400 hover:text-white transition group rounded-r-lg">
+                        <i data-lucide="scroll" class="group-hover:text-pink-500 transition"></i> Grimoire
+                    </button>
+                </nav>
+            </div>
+
+            <!-- BOTTOM PANEL (Wallet & Socials) -->
+            <div class="p-6 border-t border-purple-900/50 bg-black/40">
+                
+                <!-- Social Links -->
+                <div class="flex justify-center gap-4 mb-6">
+                    <a href="#" target="_blank" class="hover:scale-110 transition opacity-70 hover:opacity-100 p-2 bg-gray-800 rounded-full border border-gray-600">
+                        <img src="link1.png" class="w-5 h-5" onerror="this.style.display='none'">
+                        <i data-lucide="twitter" class="w-5 h-5 text-white" onerror="this.style.display='block'"></i>
+                    </a>
+                    <a href="#" class="hover:scale-110 transition opacity-70 hover:opacity-100 p-2 bg-gray-800 rounded-full border border-gray-600">
+                        <img src="link2.png" class="w-5 h-5" onerror="this.style.display='none'">
+                        <i data-lucide="github" class="w-5 h-5 text-white" onerror="this.style.display='block'"></i>
+                    </a>
+                    <a href="#" class="hover:scale-110 transition opacity-70 hover:opacity-100 p-2 bg-gray-800 rounded-full border border-gray-600">
+                        <img src="link3.png" class="w-5 h-5" onerror="this.style.display='none'">
+                        <i data-lucide="globe" class="w-5 h-5 text-white" onerror="this.style.display='block'"></i>
+                    </a>
+                </div>
+
+                <!-- Connect Button -->
+                <button id="connectBtn" onclick="openWalletSelect()" class="w-full bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-700 hover:to-purple-500 text-white py-4 px-4 rounded-lg border border-purple-400 font-bold shadow-lg active:translate-y-1 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="wallet"></i> Connect Wallet
+                </button>
+                
+                <!-- Status Indicator -->
+                <div class="mt-4 flex justify-between text-sm text-gray-500 font-mono">
+                    <span>Status:</span>
+                    <span id="networkStatus" class="text-gray-400">Offline</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto relative p-10">
+            
+            <!-- TOP SEARCH BAR & STATUS -->
+            <div class="flex flex-col gap-6 mb-10">
+                
+                <!-- Row 1: Search -->
+                <div class="flex justify-between items-center">
+                    <div class="glass-panel rounded-full px-6 py-3 flex items-center gap-3 w-1/2 transition focus-within:border-pink-500">
+                        <i data-lucide="search" class="text-purple-400 w-6 h-6"></i>
+                        <input id="searchBar" onkeyup="applyFilters()" type="text" placeholder="Search the archives..." class="bg-transparent border-none outline-none text-white w-full placeholder-purple-500/50 text-xl font-mono">
+                    </div>
+                    
+                    <div class="glass-panel px-6 py-2 rounded-full text-sm text-green-400 border border-green-500/30 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Protocol Online (V4)
+                    </div>
+                </div>
+
+                <!-- Row 2: Indexer / Filter Bar (Hidden until Loaded) -->
+                <div id="indexerBar" class="glass-panel rounded-xl p-4 flex justify-between items-center hidden animate-fade-in">
+                    <div class="flex gap-3" id="categoryFilters">
+                        <button onclick="setCategory('All')" class="filter-btn active px-4 py-2 rounded bg-gray-800 border border-gray-600 text-gray-300 hover:text-white transition">All</button>
+                        <button onclick="setCategory('Game')" class="filter-btn px-4 py-2 rounded bg-gray-800 border border-gray-600 text-gray-300 hover:text-white transition">Games</button>
+                        <button onclick="setCategory('DeFi')" class="filter-btn px-4 py-2 rounded bg-gray-800 border border-gray-600 text-gray-300 hover:text-white transition">DeFi</button>
+                        <button onclick="setCategory('Tool')" class="filter-btn px-4 py-2 rounded bg-gray-800 border border-gray-600 text-gray-300 hover:text-white transition">Tools</button>
+                        <button onclick="setCategory('Art')" class="filter-btn px-4 py-2 rounded bg-gray-800 border border-gray-600 text-gray-300 hover:text-white transition">Art</button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500 text-sm">SORT BY:</span>
+                        <select id="sortSelect" onchange="applyFilters()" class="bg-black border border-purple-500/30 rounded px-3 py-2 text-white outline-none cursor-pointer hover:border-pink-500 transition">
+                            <option value="newest">Newest Created</option>
+                            <option value="oldest">Oldest Created</option>
+                            <option value="priceLow">Price: Low to High</option>
+                            <option value="priceHigh">Price: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 
+               =================================================================
+               VIEW 1: MARKETPLACE GRID
+               =================================================================
+            -->
+            <section id="view-marketplace" class="space-y-8 animate-fade-in">
+                <div class="flex justify-between items-end border-b border-purple-800/50 pb-6">
+                    <div>
+                        <h2 class="text-6xl text-white mb-2 tracking-wide drop-shadow-lg">Spell Marketplace</h2>
+                        <p class="text-purple-300 text-xl">Browse intelligence forged by other Casters.</p>
+                    </div>
+                </div>
+                
+                <!-- The Grid Container -->
+                <div id="appGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Empty State (Shown before connection) -->
+                    <div class="col-span-full glass-panel p-20 text-center rounded-xl border-dashed border-purple-800">
+                        <i data-lucide="lock" class="w-16 h-16 mx-auto text-purple-500 mb-6 opacity-50"></i>
+                        <h3 class="text-3xl text-white font-bold mb-2">Portal Closed</h3>
+                        <p class="text-gray-400 text-lg">Connect your wallet to access the spells.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 
+               =================================================================
+               VIEW 2: LABORATORY (APP BUILDER)
+               =================================================================
+            -->
+            <section id="view-builder" class="hidden h-full animate-fade-in pb-10">
+                <div class="flex gap-12 h-full">
+                    
+                    <!-- LEFT: INPUTS & FORM -->
+                    <div class="flex-1 space-y-8">
+                        <div class="border-b border-purple-800/50 pb-6">
+                            <h2 class="text-6xl text-white drop-shadow-lg">Brew New Spell</h2>
+                            <p class="text-purple-300 text-xl">Generate code with AI, compress it, and mint it on-chain.</p>
+                        </div>
+
+                        <div class="glass-panel p-8 rounded-xl space-y-6 relative">
+                            <!-- Hidden Inputs for State -->
+                            <input type="hidden" id="updateId" value="">
+                            <input type="hidden" id="tempCode" value="">
+                            <input type="hidden" id="tempIcon" value="">
+                            <input type="hidden" id="tempCategory" value="Tool">
+
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-pink-400 mb-2 text-lg tracking-wider">SPELL NAME</label>
+                                    <input id="buildName" type="text" class="w-full bg-black/60 border border-purple-500/30 p-4 rounded-lg text-white focus:border-pink-500 outline-none transition text-lg" placeholder="e.g. ETH Tracker">
+                                </div>
+                                <div>
+                                    <label class="block text-pink-400 mb-2 text-lg tracking-wider">DESCRIPTION</label>
+                                    <input id="buildDesc" type="text" class="w-full bg-black/60 border border-purple-500/30 p-4 rounded-lg text-white focus:border-pink-500 outline-none transition text-lg" placeholder="What does it do?">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-pink-400 mb-2 text-lg tracking-wider">LOGIC INSTRUCTIONS</label>
+                                <textarea id="buildPrompt" rows="6" class="w-full bg-black/60 border border-purple-500/30 p-4 rounded-lg text-white focus:border-pink-500 outline-none transition font-mono text-lg" placeholder="Describe the app logic. E.g. 'A calculator that allows scientific notation and has a neon cyberpunk theme.'"></textarea>
+                                <p class="text-xs text-gray-500 mt-2">* The AI will use this to generate the HTML5 code automatically.</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="bg-purple-900/20 border border-purple-500/50 p-4 rounded-lg flex flex-col justify-center">
+                                    <span class="text-xs text-gray-400 uppercase tracking-widest">Protocol Fee</span>
+                                    <div class="text-2xl font-bold text-pink-400 flex items-center gap-2">
+                                        <i data-lucide="coins" class="w-5"></i> 50 MON
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-pink-400 mb-2 text-lg tracking-wider">SELLING PRICE</label>
+                                    <input id="buildPrice" type="number" step="0.001" class="w-full bg-black/60 border border-purple-500/30 p-4 rounded-lg text-white focus:border-pink-500 outline-none transition text-xl" placeholder="5">
+                                </div>
+                            </div>
+
+                            <!-- STATUS MESSAGE (Dynamic) -->
+                            <div id="compileStatus" class="hidden p-6 bg-blue-900/20 border border-blue-500 rounded-lg text-blue-200 text-center font-mono text-lg"></div>
+
+                            <!-- MINTING ACTION BUTTONS -->
+                            <div class="flex gap-4 mt-4">
+                                <button id="genBtn" onclick="generatePreview()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-lg font-bold text-xl shadow-lg flex items-center justify-center gap-2 transition hover:-translate-y-1">
+                                    <i data-lucide="cpu"></i> GENERATE PREVIEW (FREE)
+                                </button>
+                                <button id="mintBtn" onclick="mintCurrentPreview()" class="hidden flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white py-4 rounded-lg font-bold text-xl shadow-lg flex items-center justify-center gap-2 animate-pulse">
+                                    <i data-lucide="zap"></i> CAST SPELL (50 MON)
+                                </button>
+                            </div>
+                            
+                            <!-- UPDATE BUTTON (Shown only during Remix/Edit) -->
+                            <button id="updateBtn" onclick="submitUpdate()" class="hidden w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-lg font-bold text-2xl shadow-lg mt-4 flex items-center justify-center gap-3">
+                                <i data-lucide="refresh-cw" class="w-6 h-6"></i> UPDATE SPELL CODE
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT: DECORATION & INSTRUCTIONS -->
+                    <div class="w-1/3 flex flex-col items-center justify-center glass-panel rounded-xl bg-purple-900/10 p-8 border border-purple-500/30">
+                        <div class="relative w-64 h-64 mb-8 flex items-center justify-center">
+                            <img src="cauldron.png" class="w-full h-full object-contain glow-effect" onerror="this.classList.add('error')">
+                            <div class="fallback-emoji text-[120px] glow-effect">🥣</div>
+                        </div>
+                        <div class="text-center space-y-4">
+                            <h3 class="text-3xl text-white font-bold">The Alchemist's Promise</h3>
+                            <p class="text-purple-300 italic text-xl leading-relaxed">
+                                "Code is Law.<br>Prompts are Soul.<br>Value is Flow."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- VIEW 3: THE GRIMOIRE (FULL DOCUMENTATION)    -->
+            <!-- ============================================ -->
+            <section id="view-docs" class="hidden max-w-6xl mx-auto pb-20 animate-fade-in">
+                
+                <div class="flex items-center gap-6 mb-12 border-b border-purple-800/50 pb-8">
+                    <div class="p-6 bg-purple-900/30 rounded-full border border-purple-500 shadow-lg">
+                        <i data-lucide="book-open" class="w-16 h-16 text-pink-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-7xl text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-pink-500 font-bold tracking-tight">The Grimoire</h2>
+                        <p class="text-2xl text-purple-300 tracking-[0.2em] uppercase mt-2">Official Protocol V4 Documentation</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    
+                    <!-- LEFT COLUMN (MAIN CONTENT) -->
+                    <div class="lg:col-span-8 space-y-12">
+                        
+                        <!-- Section 1 -->
+                        <div class="glass-panel p-10 rounded-2xl border-l-8 border-l-pink-500">
+                            <h3 class="text-4xl text-white mb-6 font-bold flex items-center gap-3">
+                                <i data-lucide="sparkles" class="text-pink-500"></i> The Vision
+                            </h3>
+                            <p class="text-gray-300 text-lg leading-loose">
+                                <strong>Spells Protocol</strong> is the world's first decentralized "No-Code" AI Marketplace built on the Monad Blockchain. We believe that software should be immutable, censorship-resistant, and owned by the creator. 
+                                <br><br>
+                                By combining <strong>Generative AI</strong> with <strong>Smart Contract Storage</strong>, we allow anyone to turn a simple text prompt into a fully functional, sellable software product in seconds.
+                            </p>
+                        </div>
+
+                        <!-- Section 2 -->
+                        <div class="glass-panel p-10 rounded-2xl border-l-8 border-l-purple-500">
+                            <h3 class="text-4xl text-white mb-6 font-bold flex items-center gap-3">
+                                <i data-lucide="cpu" class="text-purple-500"></i> Technical Architecture
+                            </h3>
+                            <p class="text-gray-300 text-lg leading-loose mb-4">
+                                Spells V4 uses a sophisticated storage mechanism known as <strong>SSTORE2 (Bytecode Storage)</strong>.
+                            </p>
+                            <ul class="space-y-4 list-disc pl-6 text-gray-400">
+                                <li><strong>Compression:</strong> Before minting, the HTML5 code generated by the AI is compressed using LZ-String algorithms, reducing gas costs by over 60%.</li>
+                                <li><strong>Immutable Storage:</strong> The compressed code is deployed as a dedicated smart contract on Monad. It lives there forever.</li>
+                                <li><strong>Runtime:</strong> When a user launches an app, the browser fetches the bytecode, decompresses it in real-time, and injects it into a secure Sandbox.</li>
+                                <li><strong>Indexing:</strong> V4 includes on-chain metadata tags ("Game", "DeFi", "Tool") to allow for instant filtering and sorting.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Section 3 -->
+                        <div class="glass-panel p-10 rounded-2xl border-l-8 border-l-blue-500">
+                            <h3 class="text-4xl text-white mb-6 font-bold flex items-center gap-3">
+                                <i data-lucide="layers" class="text-blue-500"></i> Web3 Integration
+                            </h3>
+                            <p class="text-gray-300 text-lg leading-loose">
+                                Unlike standard Web2 no-code tools, Spells are <strong>Blockchain Aware</strong>. 
+                                <br><br>
+                                The Protocol automatically injects the <code>ethers.js</code> library into every generated app. This means Casters can build:
+                                <br>
+                                • DeFi Dashboards<br>
+                                • NFT Minters<br>
+                                • Wallet Trackers<br>
+                                • Governance Voting Tools
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN (STATS & ROADMAP) -->
+                    <div class="lg:col-span-4 space-y-8">
+                        
+                        <div class="glass-panel p-8 rounded-xl border-t-4 border-t-green-500">
+                            <h3 class="text-2xl text-white font-bold mb-6 flex items-center gap-2"><i data-lucide="coins"></i> Tokenomics</h3>
+                            <div class="space-y-6">
+                                <div class="bg-black/40 p-4 rounded border border-gray-700">
+                                    <div class="text-sm text-gray-400 uppercase tracking-wider mb-1">Protocol Fee</div>
+                                    <div class="text-3xl font-bold text-pink-500">50 MON</div>
+                                    <div class="text-xs text-gray-500 mt-1">Paid once per mint</div>
+                                </div>
+                                <div class="bg-black/40 p-4 rounded border border-gray-700">
+                                    <div class="text-sm text-gray-400 uppercase tracking-wider mb-1">Creator Revenue</div>
+                                    <div class="text-3xl font-bold text-green-500">100%</div>
+                                    <div class="text-xs text-gray-500 mt-1">Of secondary sales</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-8 rounded-xl">
+                            <h3 class="text-2xl text-white font-bold mb-4">Roadmap</h3>
+                            <ul class="space-y-4">
+                                <li class="flex items-center gap-3 text-gray-400"><span class="w-2 h-2 bg-green-500 rounded-full"></span> V1: Proof of Concept</li>
+                                <li class="flex items-center gap-3 text-gray-400"><span class="w-2 h-2 bg-green-500 rounded-full"></span> V2: Static Storage</li>
+                                <li class="flex items-center gap-3 text-gray-400"><span class="w-2 h-2 bg-green-500 rounded-full"></span> V3: Compression</li>
+                                <li class="flex items-center gap-3 text-white font-bold"><span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span> V4: Indexing & Tags</li>
+                                <li class="flex items-center gap-3 text-gray-500"><span class="w-2 h-2 bg-gray-700 rounded-full"></span> V5: DAO Governance</li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!--             MODAL WINDOWS                  -->
+    <!-- ========================================== -->
+
+    <!-- 1. WALLET SELECTOR -->
+    <div id="walletModal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex items-center justify-center z-[100]">
+        <div class="glass-panel w-96 rounded-2xl p-8 border border-purple-500 shadow-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl text-white font-bold">Select Wallet</h3>
+                <button onclick="closeWalletSelect()" class="text-gray-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <button onclick="selectWallet('metamask')" class="w-full bg-gray-800 hover:bg-gray-700 border border-gray-600 p-4 rounded-xl flex items-center justify-between group transition-all">
+                    <span class="text-lg font-bold text-white group-hover:text-orange-400">MetaMask</span>
+                    <div class="w-6 h-6 rounded-full bg-orange-500"></div>
+                </button>
+                <button onclick="selectWallet('phantom')" class="w-full bg-gray-800 hover:bg-gray-700 border border-gray-600 p-4 rounded-xl flex items-center justify-between group transition-all">
+                    <span class="text-lg font-bold text-white group-hover:text-purple-400">Phantom</span>
+                    <div class="w-6 h-6 rounded-full bg-purple-500"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SUCCESS MODAL (Animated) -->
+    <div id="successModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[300] backdrop-blur-md">
+        <div class="glass-panel p-10 rounded-2xl max-w-md text-center border border-green-500/50 shadow-lg pop-in relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-blue-500"></div>
+            
+            <div class="w-24 h-24 mx-auto bg-green-900/30 rounded-full flex items-center justify-center mb-6 border border-green-500 animate-pulse">
+                <i data-lucide="check" class="w-12 h-12 text-green-400"></i>
+            </div>
+            
+            <h3 class="text-5xl font-bold text-white mb-2 tracking-widest drop-shadow-lg">SPELL CAST!</h3>
+            <p id="successMessage" class="text-green-300 mb-8 font-mono text-lg mt-4">Your application has been permanently etched into the eternal ledger.</p>
+            
+            <button onclick="closeSuccessModal()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white text-xl py-4 rounded-lg font-bold tracking-widest shadow-lg transition transform hover:-translate-y-1">
+                ENTER MARKETPLACE
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. APP RUNNER WINDOW (Runtime) -->
+    <div id="appWindow" class="fixed inset-0 bg-black z-[200] hidden flex flex-col">
+        <!-- Toolbar -->
+        <div class="h-16 border-b border-purple-900 bg-[#0f0518] flex justify-between items-center px-6 relative z-50">
+            <div class="flex items-center gap-4">
+                <!-- Mini Icon with Fallback -->
+                <img src="potion.png" class="w-8 h-8" onerror="this.classList.add('error')">
+                <div class="fallback-emoji text-2xl">🧪</div>
+                
+                <div>
+                    <h3 id="appWindowTitle" class="text-white font-bold font-mono text-xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">App Name</h3>
+                    <span class="px-2 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-400 text-xs tracking-wider">LIVE ON-CHAIN RUNTIME (V4)</span>
+                </div>
+            </div>
+            <button onclick="closeAppWindow()" class="text-red-400 hover:text-red-300 font-bold border border-red-500/50 px-6 py-2 rounded transition bg-red-900/20 hover:bg-red-900/40">EXIT APP</button>
+        </div>
+    
+        <!-- Iframe Container -->
+        <div class="flex-1 relative bg-gray-900">
+            <!-- Loading Overlay -->
+            <div id="appLoading" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#0f0518] hidden">
+                <div class="w-24 h-24 border-4 border-purple-600 border-t-pink-500 rounded-full animate-spin mb-6"></div>
+                <h2 class="text-3xl text-white font-bold mb-2">Manifesting Application...</h2>
+                <p class="text-purple-400 font-mono animate-pulse text-lg">Decompressing Bytecode...</p>
+            </div>
+            
+            <!-- 
+                WEB3 BRIDGE PERMISSIONS:
+                This iframe is "unlocked" so it can talk to MetaMask.
+            -->
+            <iframe id="appFrame" class="w-full h-full border-none bg-white" sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-same-origin allow-popups allow-downloads"></iframe>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!--             JAVASCRIPT LOGIC               -->
+    <!-- ========================================== -->
+    <script>
+        // Initialize Icons Safely
+        try { lucide.createIcons(); } catch(e) {}
+
+        // --- RAIN ANIMATION LOGIC (Expanded) ---
+        const canvas = document.getElementById('rainCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let drops = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Drop {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * -100;
+                this.speed = Math.random() * 5 + 3;
+                this.radius = Math.random() * 1.5 + 0.5;
+                this.color = ['#9d4edd', '#7b2cbf', '#f72585', '#10b981'][Math.floor(Math.random() * 4)];
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > height) {
+                    this.y = -10;
+                    this.x = Math.random() * width;
+                }
+                return true;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        // Create Raindrops
+        for (let i = 0; i < 120; i++) {
+            drops.push(new Drop());
+        }
+
+        // Animation Loop
+        function animateRain() {
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < drops.length; i++) {
+                drops[i].update();
+                drops[i].draw();
+            }
+            requestAnimationFrame(animateRain);
+        }
+        animateRain();
+
+        // --- WEB3 VARIABLES ---
+        // ⚠️ UPDATE THIS ADDRESS ⚠️
+        const CONTRACT_ADDRESS = "0x53830d0F28182e0EB8F1C563AC67C6eDD0cD301b"; 
+        
+        // V4 ABI (With Categories)
+        const ABI = [
+            "function appCount() view returns (uint256)",
+            "function createApp(string, string, string, string, uint256) public payable",
+            "function updateApp(uint256, string) public",
+            "function buyApp(uint256) public payable",
+            "function getAppInfo(uint256) view returns (string, uint256, address, string, string, uint256)",
+            "function hasAccess(uint256, address) view returns (bool)",
+            "function getCode(uint256) view returns (string)"
+        ];
+
+        let provider, signer, contract, userAddress;
+        let allApps = [];
+        let currentCategory = 'All';
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            ['marketplace', 'builder', 'docs'].forEach(id => {
+                document.getElementById(`view-${id}`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).classList.remove('active');
+            });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            if(tabId === 'marketplace') loadMarketplace();
+            if(tabId === 'builder') {
+                document.getElementById("mintBtn").classList.remove("hidden");
+                document.getElementById("updateBtn").classList.add("hidden");
+            }
+        }
+
+        function openWalletSelect() { document.getElementById("walletModal").classList.remove("hidden"); }
+        function closeWalletSelect() { document.getElementById("walletModal").classList.add("hidden"); }
+
+        async function selectWallet(type) {
+            closeWalletSelect();
+            let p = type === 'metamask' ? window.ethereum : window.phantom?.ethereum;
+            if (!p) return alert("Wallet not found!");
+            try {
+                provider = new ethers.providers.Web3Provider(p);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+                
+                const btn = document.getElementById("connectBtn");
+                btn.innerHTML = `<i data-lucide="check-circle"></i> ${userAddress.slice(0,6)}...`;
+                btn.classList.remove("bg-gradient-to-r"); 
+                btn.classList.add("bg-green-800", "border-green-500");
+                
+                document.getElementById("networkStatus").innerText = "Connected";
+                document.getElementById("networkStatus").className = "text-green-400 mt-3 text-center text-sm font-mono";
+                
+                loadMarketplace();
+                lucide.createIcons();
+            } catch (e) { alert("Connection Failed: " + e.message); }
+        }
+
+        // --- INDEXER & FILTERING ---
+        async function loadMarketplace() {
+            if(!contract) return;
+            const grid = document.getElementById("appGrid");
+            document.getElementById("indexerBar").classList.remove("hidden");
+            
+            // Only fetch if empty
+            if(allApps.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center text-purple-400 animate-pulse text-xl mt-20">Indexing V4 Registry...</div>`;
+                try {
+                    const count = await contract.appCount();
+                    for (let i = 1; i <= count; i++) {
+                        const info = await contract.getAppInfo(i);
+                        allApps.push({
+                            id: i,
+                            name: info[0],
+                            price: ethers.utils.formatEther(info[1]),
+                            creator: info[2],
+                            icon: info[3],
+                            category: info[4] || "Other",
+                            timestamp: info[5].toNumber(),
+                            isOwned: await contract.hasAccess(i, userAddress)
+                        });
+                    }
+                } catch (e) { grid.innerHTML = `<div class="text-red-400">Error: ${e.message}</div>`; return; }
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById("searchBar").value.toLowerCase();
+            const sort = document.getElementById("sortSelect").value;
+            const grid = document.getElementById("appGrid");
+            
+            let filtered = allApps.filter(app => 
+                (currentCategory === 'All' || app.category === currentCategory) &&
+                app.name.toLowerCase().includes(search)
+            );
+
+            // Sort Logic
+            if (sort === 'newest') filtered.sort((a, b) => b.id - a.id);
+            if (sort === 'oldest') filtered.sort((a, b) => a.id - b.id);
+            if (sort === 'priceLow') filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            if (sort === 'priceHigh') filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+
+            let html = "";
+            filtered.forEach(app => {
+                let iconSvg = '<div class="text-4xl">🧪</div>';
+                try { if(app.icon) iconSvg = LZString.decompressFromBase64(app.icon); } catch(e){}
+                
+                html += `
+                <div class="spell-card glass-panel p-6 rounded-xl flex flex-col justify-between hover:border-pink-500 transition relative group">
+                    <div>
+                        <div class="h-40 bg-black/50 rounded-lg mb-4 flex items-center justify-center overflow-hidden spell-icon border border-purple-900/50 shadow-inner">${iconSvg}</div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-2xl font-bold text-white truncate">${app.name}</h3>
+                            <span class="bg-purple-900/80 text-xs px-2 py-1 rounded text-pink-300 border border-purple-600">${app.category}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 font-mono mb-4">Creator: ${app.creator.slice(0,6)}...</p>
+                    </div>
+                    <div class="mt-auto pt-4 border-t border-white/10 flex gap-2">
+                        ${app.isOwned 
+                            ? `<button onclick="launchApp(${app.id}, '${app.name}')" class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 py-2 rounded text-white font-bold shadow-lg flex items-center justify-center gap-2"><i data-lucide="play"></i> LAUNCH</button>` 
+                            : `<button onclick="buyApp(${app.id}, '${app.price}')" class="flex-1 bg-gradient-to-r from-purple-700 to-pink-700 hover:from-purple-600 py-2 rounded text-white font-bold shadow-lg flex justify-between px-4 items-center"><span>BUY</span> <span>${app.price}</span></button>`
+                        }
+                         <button onclick="remixApp(${app.id}, '${app.name}', false)" class="bg-gray-800 hover:bg-gray-700 text-gray-400 px-3 rounded border border-gray-600" title="Remix"><i data-lucide="git-fork" class="w-4"></i></button>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html || `<div class="col-span-full text-center text-gray-500 italic">No spells found.</div>`;
+            lucide.createIcons();
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            applyFilters();
+        }
+
+        // --- GENERATOR ---
+        async function generatePreview() {
+            const name = document.getElementById("buildName").value;
+            const desc = document.getElementById("buildDesc").value;
+            const prompt = document.getElementById("buildPrompt").value;
+            if(!name || !prompt) return alert("Fill all fields!");
+
+            setStatus("Generating Code, Icon & Category...", false);
+            document.getElementById("mintBtn").classList.add("hidden");
+
+            try {
+                const res = await fetch("/api/chat", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        prompt: `App: ${name}. Desc: ${desc}. Requirements: ${prompt}`, 
+                        message: "Generate V4 JSON" 
+                    })
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+                if (!data.reply || !data.reply.code) throw new Error("AI failed.");
+
+                document.getElementById("tempCode").value = LZString.compressToBase64(data.reply.code);
+                document.getElementById("tempIcon").value = LZString.compressToBase64(data.reply.icon || "");
+                document.getElementById("tempCategory").value = data.reply.category || "Tool";
+
+                runApp(data.reply.code, `PREVIEW: ${name}`);
+                document.getElementById("mintBtn").classList.remove("hidden");
+                setStatus(`Ready! Category detected: ${data.reply.category}`, false);
+
+            } catch(e) { setStatus("Error: " + e.message, true); }
+        }
+
+        async function mintCurrentPreview() {
+            if(!contract) return alert("Connect Wallet!");
+            const name = document.getElementById("buildName").value;
+            const price = document.getElementById("buildPrice").value;
+            const code = document.getElementById("tempCode").value;
+            const icon = document.getElementById("tempIcon").value;
+            const cat = document.getElementById("tempCategory").value;
+
+            if(!code) return alert("Preview first!");
+            setStatus("Minting V4 Spell...", false);
+
+            try {
+                const tx = await contract.createApp(name, code, icon, cat, ethers.utils.parseEther(price), { 
+                    value: ethers.utils.parseEther("50"), gasLimit: 25000000 
+                });
+                await tx.wait();
+                showSuccess("App Minted Successfully!");
+            } catch(e) { setStatus("Mint Error: " + e.message, true); }
+        }
+
+        // --- RUNNER ---
+        function runApp(rawCode, title) {
+            document.getElementById("appWindowTitle").innerText = title;
+            document.getElementById("appWindow").classList.remove("hidden");
+            document.getElementById("appWindow").classList.add("flex");
+            document.getElementById("appLoading").classList.add("hidden");
+
+            // INJECT WEB3 BRIDGE + START BUTTON
+            const injector = `
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"><\/script>
+                <style>#platform-start-btn{position:fixed;inset:0;z-index:9999;background:#000;display:flex;justify-content:center;align-items:center;cursor:pointer}#platform-start-btn div{padding:20px 40px;border:2px solid #0f0;color:#0f0;font-size:30px;text-transform:uppercase;background:rgba(0,255,0,0.1)}</style>
+                <div id="platform-start-btn" onclick="startPlatformApp()"><div>CLICK TO START</div></div>
+                <script>
+                    window.ethereum = window.parent.ethereum;
+                    function startPlatformApp() {
+                        document.getElementById('platform-start-btn').remove();
+                        window.focus();
+                        if(typeof startGame === 'function') startGame();
+                        if(typeof init === 'function') init();
+                        if(typeof loop === 'function') requestAnimationFrame(loop);
+                    }
+                <\/script>
+            `;
+            document.getElementById("appFrame").srcdoc = injector + rawCode;
+        }
+
+        async function launchApp(id, name) {
+            try {
+                document.getElementById("appWindowTitle").innerText = name;
+                document.getElementById("appWindow").classList.remove("hidden");
+                document.getElementById("appWindow").classList.add("flex");
+                document.getElementById("appLoading").classList.remove("hidden");
+                const compressedCode = await contract.getCode(id);
+                const code = LZString.decompressFromBase64(compressedCode);
+                runApp(code, name);
+            } catch(e) { alert("Launch Error: " + e.message); closeAppWindow(); }
+        }
+
+        // --- HELPERS ---
+        async function submitUpdate() {
+            const id = document.getElementById("updateId").value;
+            const prompt = document.getElementById("buildPrompt").value;
+            if(!id) return; setStatus("Generating Update...", false);
+            try {
+                 const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: `UPDATE MODE. ID: ${id}. Requirements: ${prompt}`, message: "Generate Code Only" }) });
+                const data = await res.json();
+                if(!data.reply || !data.reply.code) throw new Error("AI Failed");
+                const compressedCode = LZString.compressToBase64(data.reply.code);
+                setStatus("Pushing Update...", false);
+                const tx = await contract.updateApp(id, compressedCode, { gasLimit: 25000000 });
+                await tx.wait(); showSuccess("App Updated!");
+            } catch(e) { setStatus("Update Error: " + e.message, true); }
+        }
+
+        async function buyApp(id, price) {
+            try { const tx = await contract.buyApp(id, { value: ethers.utils.parseEther(price), gasLimit: 500000 }); alert("Purchasing..."); await tx.wait(); showSuccess("Purchased!"); } catch(e) { alert("Error: " + e.message); }
+        }
+        function setStatus(msg, err) { const el = document.getElementById("compileStatus"); el.classList.remove("hidden"); el.innerText = msg; el.className = err ? "p-4 bg-red-900/50 border border-red-500 rounded text-center" : "p-4 bg-blue-900/50 border border-blue-500 rounded text-center"; lucide.createIcons(); }
+        function showSuccess(msg) { document.getElementById("successMessage").innerText = msg; document.getElementById("successModal").classList.remove("hidden"); document.getElementById("successModal").classList.add("flex"); document.getElementById("compileStatus").classList.add("hidden"); switchTab('marketplace'); }
+        function closeSuccessModal() { document.getElementById("successModal").classList.remove("flex"); document.getElementById("successModal").classList.add("hidden"); }
+        function closeAppWindow() { document.getElementById("appWindow").classList.add("hidden"); document.getElementById("appWindow").classList.remove("flex"); document.getElementById("appFrame").srcdoc = ""; }
+        function editApp(id, name) { switchTab('builder'); document.getElementById("buildName").value = name; document.getElementById("updateId").value = id; document.getElementById("mintBtn").classList.add("hidden"); document.getElementById("updateBtn").classList.remove("hidden"); }
+        function remixApp(id, name, isUpdate) { switchTab('builder'); if(isUpdate) { editApp(id, name); } else { document.getElementById("buildName").value = "Remix of " + name; document.getElementById("buildPrompt").value = `(Remixing App #${id}) Keep core logic but add...`; } }
+    </script>
+</body>
+</html>
