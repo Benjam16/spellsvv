@@ -5,18 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spells Protocol V4 | The AI App Engine</title>
     
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💠</text></svg>">
 
-    <!-- Core Libraries -->
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <script>
@@ -25,191 +22,140 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    colors: {
-                        obsidian: '#050505',
-                        charcoal: '#0F0F12',
-                        glass: 'rgba(255, 255, 255, 0.03)',
-                        neon: '#6366f1',
-                    },
-                    backgroundImage: {
-                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-                    }
+                    colors: { obsidian: '#050505', charcoal: '#0F0F12', neon: '#6366f1' }
                 }
             }
         }
     </script>
 
     <style>
-        /* BASE AESTHETICS */
         body { background-color: #050505; color: #e4e4e7; overflow-x: hidden; }
-        
-        /* CUSTOM SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
-
-        /* NEURAL CANVAS */
-        #neuralCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none; opacity: 0.6;
-        }
-
-        /* GLASSMORPHISM UTILITIES */
+        
+        #neuralCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6; }
+        
         .glass-panel {
             background: rgba(15, 15, 18, 0.6);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        /* SPOTLIGHT EFFECT */
+        /* Interactive Spotlight */
         .spotlight-group:hover .spotlight { opacity: 1; }
         .spotlight {
             background: radial-gradient(600px circle at var(--x) var(--y), rgba(99, 102, 241, 0.15), transparent 40%);
             z-index: 1;
         }
-
-        /* TYPING ANIMATION */
-        .typing-cursor::after { content: '|'; animation: blink 1s step-start infinite; color: #6366f1; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* UTILITIES */
-        .text-glow { text-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
-        .fade-enter { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="antialiased selection:bg-indigo-500/30">
 
-    <!-- 1. DYNAMIC BACKGROUND -->
     <canvas id="neuralCanvas"></canvas>
     
-    <!-- Background Glows -->
     <div class="fixed inset-0 z-0 pointer-events-none">
         <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[128px]"></div>
         <div class="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[128px]"></div>
     </div>
 
-    <!-- 2. MAIN LAYOUT -->
     <div class="relative z-10 flex h-screen overflow-hidden">
         
-        <!-- SIDEBAR NAVIGATION -->
-        <aside class="w-20 lg:w-72 flex-shrink-0 flex flex-col justify-between border-r border-white/5 bg-charcoal/50 backdrop-blur-xl z-50 transition-all duration-300">
+        <!-- SIDEBAR -->
+        <aside class="w-20 lg:w-72 flex-shrink-0 flex flex-col justify-between border-r border-white/5 bg-charcoal/50 backdrop-blur-xl z-50">
             <div>
-                <!-- Brand -->
                 <div class="h-20 flex items-center justify-center lg:justify-start lg:px-8 border-b border-white/5">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                         <i data-lucide="cpu" class="text-white w-6 h-6"></i>
                     </div>
                     <div class="hidden lg:block ml-4">
-                        <h1 class="font-bold text-white tracking-tight text-lg">SPELLS</h1>
+                        <h1 class="font-bold text-white text-lg">SPELLS</h1>
                         <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Protocol V4</p>
                     </div>
                 </div>
 
-                <!-- Menu -->
                 <nav class="mt-8 space-y-2 px-2 lg:px-4">
                     <button onclick="switchTab('home')" id="nav-home" class="nav-btn active w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="home" class="w-5 h-5 group-hover:text-indigo-400 transition-colors"></i>
-                        <span class="hidden lg:block">Overview</span>
+                        <i data-lucide="home" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Overview</span>
                     </button>
                     <button onclick="switchTab('marketplace')" id="nav-marketplace" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="grid" class="w-5 h-5 group-hover:text-indigo-400 transition-colors"></i>
-                        <span class="hidden lg:block">Marketplace</span>
+                        <i data-lucide="grid" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Marketplace</span>
                     </button>
                     <button onclick="switchTab('builder')" id="nav-builder" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="sparkles" class="w-5 h-5 group-hover:text-indigo-400 transition-colors"></i>
-                        <span class="hidden lg:block">Laboratory</span>
+                        <i data-lucide="sparkles" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Laboratory</span>
                     </button>
                     <button onclick="switchTab('docs')" id="nav-docs" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="book-open" class="w-5 h-5 group-hover:text-indigo-400 transition-colors"></i>
-                        <span class="hidden lg:block">Documentation</span>
+                        <i data-lucide="book-open" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Documentation</span>
                     </button>
                 </nav>
             </div>
 
-            <!-- Wallet Connection -->
             <div class="p-4 border-t border-white/5">
-                <button id="connectBtn" onclick="openWalletSelect()" class="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-sm transition shadow-lg shadow-white/5 flex items-center justify-center gap-2">
-                    <i data-lucide="wallet" class="w-4 h-4"></i>
-                    <span class="hidden lg:inline">Connect</span>
+                <button id="connectBtn" onclick="openWalletSelect()" class="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="wallet" class="w-4 h-4"></i><span class="hidden lg:inline">Connect</span>
                 </button>
-                <div class="mt-4 hidden lg:flex items-center justify-center gap-2 text-[10px] text-gray-500 font-mono uppercase">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Monad Devnet
-                </div>
             </div>
         </aside>
 
-        <!-- CONTENT AREA -->
+        <!-- MAIN CONTAINER -->
         <main id="mainContainer" class="flex-1 overflow-y-auto scroll-smooth relative" onmousemove="handleSpotlight(event)">
             
-            <!-- VIEW 1: HOME / LANDING -->
+            <!-- HOME VIEW -->
             <section id="view-home" class="min-h-full">
-                <!-- Hero -->
                 <div class="relative pt-32 pb-20 px-8 md:px-16 max-w-7xl mx-auto">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-mono mb-6 fade-enter">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-mono mb-6">
                         <span class="w-2 h-2 rounded-full bg-indigo-500"></span> V4 ENGINE ONLINE
                     </div>
                     
-                    <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight fade-enter" style="animation-delay: 0.1s">
-                        The Infinite <br> 
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 text-glow">App Engine.</span>
+                    <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                        The Infinite <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">App Engine.</span>
                     </h1>
                     
-                    <p class="text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed fade-enter" style="animation-delay: 0.2s">
-                        Spells Protocol allows you to generate, deploy, and trade full-stack applications entirely on-chain. No servers. No IPFS. Just pure bytecode.
+                    <p class="text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
+                        Generate, deploy, and trade full-stack applications entirely on-chain. No servers. No IPFS. Just pure bytecode.
                     </p>
 
-                    <div class="flex gap-4 fade-enter" style="animation-delay: 0.3s">
+                    <div class="flex gap-4">
                         <button onclick="switchTab('marketplace')" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition shadow-lg shadow-indigo-500/20 flex items-center gap-2">
-                            Explore Apps <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            Explore Registry <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>
                         <button onclick="switchTab('docs')" class="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-bold transition">
-                            Read Docs
+                            Architecture
                         </button>
                     </div>
                 </div>
 
-                <!-- Features Grid (Visible without Wallet) -->
                 <div class="px-8 md:px-16 max-w-7xl mx-auto pb-32">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
                             <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
                             <div class="relative z-10">
-                                <div class="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-6 border border-indigo-500/20">
-                                    <i data-lucide="cpu" class="text-indigo-400 w-6 h-6"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-6 border border-indigo-500/20"><i data-lucide="cpu" class="text-indigo-400 w-6 h-6"></i></div>
                                 <h3 class="text-xl font-bold text-white mb-2">AI Generation</h3>
-                                <p class="text-gray-400 text-sm leading-relaxed">Describe any functionality in plain English. The protocol constructs the HTML, CSS, and JS logic instantly.</p>
+                                <p class="text-gray-400 text-sm">Describe any functionality in plain English. The protocol constructs the HTML, CSS, and JS logic instantly.</p>
                             </div>
                         </div>
                         <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
                             <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
                             <div class="relative z-10">
-                                <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-6 border border-emerald-500/20">
-                                    <i data-lucide="database" class="text-emerald-400 w-6 h-6"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-6 border border-emerald-500/20"><i data-lucide="database" class="text-emerald-400 w-6 h-6"></i></div>
                                 <h3 class="text-xl font-bold text-white mb-2">SSTORE2 Storage</h3>
-                                <p class="text-gray-400 text-sm leading-relaxed">Code is compressed via LZ-String and stored directly in contract bytecode. 100% immutable and censorship resistant.</p>
+                                <p class="text-gray-400 text-sm">Code is compressed via LZ-String and stored directly in contract bytecode. 100% immutable.</p>
                             </div>
                         </div>
                         <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
                             <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
                             <div class="relative z-10">
-                                <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 border border-purple-500/20">
-                                    <i data-lucide="globe" class="text-purple-400 w-6 h-6"></i>
-                                </div>
+                                <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 border border-purple-500/20"><i data-lucide="globe" class="text-purple-400 w-6 h-6"></i></div>
                                 <h3 class="text-xl font-bold text-white mb-2">Browser Runtime</h3>
-                                <p class="text-gray-400 text-sm leading-relaxed">Apps run in a secure sandbox but maintain a bridge to the user's wallet for signing transactions and DeFi interactions.</p>
+                                <p class="text-gray-400 text-sm">Apps run in a secure sandbox but maintain a bridge to the user's wallet for signing transactions.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- VIEW 2: MARKETPLACE -->
+            <!-- MARKETPLACE VIEW -->
             <section id="view-marketplace" class="hidden min-h-full p-8 md:p-16">
                 <div class="max-w-7xl mx-auto">
                     <div class="flex justify-between items-end mb-12">
@@ -223,16 +169,11 @@
                             <button onclick="filterCategory('DeFi')" class="px-4 py-2 text-xs font-bold rounded-lg bg-white/5 text-gray-400 hover:text-white border border-white/5">DEFI</button>
                         </div>
                     </div>
-
-                    <!-- Search -->
                     <div class="relative mb-8">
                         <i data-lucide="search" class="absolute left-4 top-3.5 text-gray-500 w-5 h-5"></i>
-                        <input id="searchBar" onkeyup="filterApps()" type="text" placeholder="Search by name, hash, or creator..." class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition">
+                        <input id="searchBar" onkeyup="filterApps()" type="text" placeholder="Search by name, hash, or creator..." class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-indigo-500 outline-none transition">
                     </div>
-
-                    <!-- The Grid -->
                     <div id="appGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Content injected via JS -->
                         <div class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
                             <p class="text-gray-500">Connecting to Blockchain Node...</p>
                         </div>
@@ -240,29 +181,21 @@
                 </div>
             </section>
 
-            <!-- VIEW 3: BUILDER -->
+            <!-- BUILDER VIEW -->
             <section id="view-builder" class="hidden min-h-full p-8 md:p-12">
                 <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <!-- Config Panel -->
                     <div class="glass-panel p-8 rounded-2xl h-fit">
-                        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                            <i data-lucide="terminal" class="text-indigo-400"></i> Construction Kit
-                        </h2>
-                        
-                        <!-- Form -->
+                        <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="terminal" class="text-indigo-400"></i> Construction Kit</h2>
                         <div class="space-y-6">
                             <input type="hidden" id="updateId"><input type="hidden" id="tempCode"><input type="hidden" id="tempIcon">
-                            
                             <div>
                                 <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Application Name</label>
                                 <input id="buildName" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white focus:border-indigo-500 outline-none" placeholder="e.g. Neural Dex">
                             </div>
-
                             <div>
                                 <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">System Prompt</label>
-                                <textarea id="buildPrompt" rows="6" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono text-sm focus:border-indigo-500 outline-none" placeholder="Describe functionality. E.g. 'A dark mode tetris game that speeds up every 100 points.'"></textarea>
+                                <textarea id="buildPrompt" rows="6" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono text-sm focus:border-indigo-500 outline-none" placeholder="Describe functionality..."></textarea>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Category</label>
@@ -273,32 +206,25 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">List Price (MON)</label>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Price (MON)</label>
                                     <input id="buildPrice" type="number" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white outline-none" placeholder="0.00">
                                 </div>
                             </div>
-
                             <div id="compileStatus" class="hidden p-4 rounded-lg font-mono text-xs"></div>
-
                             <div class="flex gap-4 pt-4">
                                 <button id="genBtn" onclick="generatePreview()" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition">Generate v1.0</button>
                                 <button id="mintBtn" onclick="mintCurrentPreview()" class="hidden flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition">Deploy on Monad</button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Preview / Docs -->
                     <div class="space-y-6">
                         <div class="p-6 border border-white/10 rounded-2xl bg-white/5">
                             <h3 class="font-bold text-white mb-2">Prompt Engineering Guide</h3>
                             <ul class="space-y-3 text-sm text-gray-400">
-                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Be specific about visual style (e.g. "Cyberpunk aesthetics").</li>
-                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Mention libraries ("Use Ethers.js for wallet connection").</li>
-                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Ask for error handling ("Handle web3 connection errors gracefully").</li>
+                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Be specific about visuals ("Cyberpunk").</li>
+                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Request libraries ("Use Ethers.js").</li>
                             </ul>
                         </div>
-                        
-                        <!-- Terminal Output Visual -->
                         <div class="p-6 bg-black border border-white/10 rounded-2xl font-mono text-xs text-gray-500 h-64 overflow-hidden relative">
                             <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/80 pointer-events-none"></div>
                             <p>> Initializing Builder Environment...</p>
@@ -309,45 +235,65 @@
                 </div>
             </section>
 
-            <!-- VIEW 4: DOCS -->
-            <section id="view-docs" class="hidden min-h-full p-8 md:p-16 max-w-5xl mx-auto">
+            <!-- DOCS VIEW (FIXED & SCROLLABLE) -->
+            <section id="view-docs" class="hidden min-h-full p-8 md:p-16 max-w-6xl mx-auto">
                 <div class="mb-12 border-b border-white/10 pb-8">
                     <h1 class="text-5xl font-bold text-white mb-4">Documentation</h1>
                     <p class="text-xl text-gray-400">Technical reference for Spells Protocol V4.</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    <!-- TOC -->
-                    <div class="hidden lg:block space-y-4 text-sm text-gray-500 sticky top-8">
-                        <p class="text-white font-bold mb-4 uppercase tracking-widest text-xs">Contents</p>
-                        <a href="#" class="block hover:text-indigo-400 transition">Introduction</a>
-                        <a href="#" class="block hover:text-indigo-400 transition">SSTORE2 Architecture</a>
-                        <a href="#" class="block hover:text-indigo-400 transition">Runtime Sandbox</a>
-                        <a href="#" class="block hover:text-indigo-400 transition">Contract Addresses</a>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                    <!-- FIXED SIDEBAR FOR DOCS -->
+                    <div class="hidden lg:block space-y-2 text-sm sticky top-8 h-fit">
+                        <p class="text-white font-bold mb-4 uppercase tracking-widest text-xs">Table of Contents</p>
+                        <button onclick="scrollToDoc('doc-intro')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Introduction</button>
+                        <button onclick="scrollToDoc('doc-arch')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Architecture</button>
+                        <button onclick="scrollToDoc('doc-store')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">SSTORE2 Storage</button>
+                        <button onclick="scrollToDoc('doc-runtime')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Runtime Sandbox</button>
                     </div>
 
-                    <!-- Content -->
-                    <div class="lg:col-span-2 space-y-12">
-                        <div>
-                            <h3 class="text-2xl font-bold text-white mb-4">Architecture</h3>
+                    <!-- DOCS CONTENT -->
+                    <div class="lg:col-span-3 space-y-16">
+                        
+                        <div id="doc-intro" class="scroll-mt-12">
+                            <h3 class="text-2xl font-bold text-white mb-4">Introduction</h3>
                             <p class="text-gray-400 leading-relaxed mb-6">
-                                Traditional NFTs store metadata on IPFS, which is mutable and can go offline. Spells Protocol stores the entire application logic (HTML/JS) directly in the Monad Blockchain State Trie using <code class="bg-white/10 px-1 rounded text-indigo-300">SSTORE2</code>.
+                                Spells Protocol is an experimental "AI-to-Blockchain" pipeline. It allows users to prompt an LLM to generate functional HTML5 applications, which are then compressed and stored immutably on the Monad Blockchain.
                             </p>
-                            <div class="bg-black/50 p-4 rounded-xl border border-white/10 font-mono text-xs text-gray-300 overflow-x-auto">
-                                // Solidity Interface<br>
-                                function getCode(uint256 tokenId) external view returns (string memory) {<br>
-                                &nbsp;&nbsp;address pointer = sstore2Pointers[tokenId];<br>
-                                &nbsp;&nbsp;return SSTORE2.read(pointer);<br>
-                                }
+                        </div>
+
+                        <div id="doc-arch" class="scroll-mt-12">
+                            <h3 class="text-2xl font-bold text-white mb-4">Protocol Architecture</h3>
+                            <div class="bg-black/50 p-6 rounded-xl border border-white/10 relative overflow-hidden">
+                                <div class="font-mono text-xs text-indigo-300">
+                                    [ USER PROMPT ] --> [ GOOGLE GEMINI ] --> [ HTML CODE ]<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ LZ-STRING COMPRESSION ]<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                                    [ MONAD BLOCKCHAIN ] <-- [ SSTORE2 POINTER ]
+                                </div>
                             </div>
                         </div>
 
-                        <div>
-                            <h3 class="text-2xl font-bold text-white mb-4">Runtime Sandbox</h3>
-                            <p class="text-gray-400 leading-relaxed">
-                                When a user launches an application, the browser fetches the bytecode, decompresses it using <code class="text-white">LZ-String</code>, and injects it into an isolated iframe. The protocol injects a secure bridge to expose <code class="text-white">window.ethereum</code> to the sandboxed app.
+                        <div id="doc-store" class="scroll-mt-12">
+                            <h3 class="text-2xl font-bold text-white mb-4">SSTORE2 Storage</h3>
+                            <p class="text-gray-400 leading-relaxed mb-6">
+                                Traditional NFTs store metadata on IPFS, which is mutable and can go offline. Spells Protocol uses the `SSTORE2` pattern to write bytecode directly to a contract address. This data is part of the blockchain state and cannot be deleted.
                             </p>
                         </div>
+
+                        <div id="doc-runtime" class="scroll-mt-12">
+                            <h3 class="text-2xl font-bold text-white mb-4">Runtime Sandbox</h3>
+                            <p class="text-gray-400 leading-relaxed mb-4">
+                                When launching an app, the browser performs a real-time decompression. To allow the app to interact with Web3 without compromising the user's security, we inject a secure bridge.
+                            </p>
+                            <div class="bg-black/50 p-4 rounded-xl border border-white/10 font-mono text-xs text-gray-500">
+                                // The Injection Bridge (Simplified)<br>
+                                window.ethereum = window.parent.ethereum;<br>
+                                window.ethers = window.parent.ethers;
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </section>
@@ -355,14 +301,14 @@
         </main>
     </div>
 
-    <!-- APP RUNNER OVERLAY -->
+    <!-- APP RUNNER -->
     <div id="appWindow" class="fixed inset-0 z-[100] bg-[#050505] hidden flex flex-col transition-opacity duration-300">
         <div class="h-14 border-b border-white/5 bg-[#0F0F12] flex justify-between items-center px-6">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                 <span class="text-sm font-mono text-gray-400 tracking-widest uppercase" id="appWindowTitle">Runtime Environment</span>
             </div>
-            <button onclick="closeAppWindow()" class="text-xs bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20 transition">Terminate Process</button>
+            <button onclick="closeAppWindow()" class="text-xs bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20 transition">Terminate</button>
         </div>
         <div class="flex-1 relative">
             <iframe id="appFrame" class="w-full h-full border-none bg-white"></iframe>
@@ -400,7 +346,7 @@
 
         function initNodes() {
             nodes = [];
-            const density = Math.floor(width * height / 15000); // Calc density based on screen
+            const density = Math.floor(width * height / 15000); 
             for(let i=0; i<density; i++){
                 nodes.push({
                     x: Math.random() * width, y: Math.random() * height,
@@ -412,7 +358,7 @@
 
         function animateNodes() {
             ctx.clearRect(0,0,width,height);
-            ctx.fillStyle = '#6366f1'; // Indigo nodes
+            ctx.fillStyle = '#6366f1'; 
             ctx.strokeStyle = '#6366f1';
             
             nodes.forEach(node => {
@@ -420,11 +366,9 @@
                 if(node.x < 0 || node.x > width) node.vx *= -1;
                 if(node.y < 0 || node.y > height) node.vy *= -1;
 
-                // Draw Node
                 ctx.globalAlpha = 0.5;
                 ctx.beginPath(); ctx.arc(node.x, node.y, node.size, 0, Math.PI*2); ctx.fill();
 
-                // Draw Connections
                 nodes.forEach(other => {
                     const dx = node.x - other.x;
                     const dy = node.y - other.y;
@@ -436,7 +380,6 @@
                     }
                 });
 
-                // Mouse Interaction
                 const mdx = mouse.x - node.x;
                 const mdy = mouse.y - node.y;
                 const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
@@ -452,7 +395,6 @@
         // --- 2. UI LOGIC ---
         lucide.createIcons();
         
-        // Spotlight Effect
         function handleSpotlight(e) {
             document.querySelectorAll('.spotlight').forEach(el => {
                 const rect = el.parentElement.getBoundingClientRect();
@@ -465,7 +407,6 @@
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
             
-            // Nav State
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.classList.remove('text-white', 'bg-white/5');
                 b.classList.add('text-gray-400');
@@ -475,8 +416,11 @@
                 activeBtn.classList.remove('text-gray-400');
                 activeBtn.classList.add('text-white', 'bg-white/5');
             }
-
             if(id === 'marketplace') loadMarketplace();
+        }
+
+        function scrollToDoc(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
         }
 
         // --- 3. WEB3 & APP ENGINE ---
@@ -500,18 +444,13 @@
                 contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
                 
                 document.getElementById('connectBtn').innerHTML = `<i data-lucide="user" class="w-4 h-4"></i> ${userAddress.slice(0,6)}...`;
-                
-                // Refresh views if they are open
                 if(!document.getElementById('view-marketplace').classList.contains('hidden')) loadMarketplace();
             } catch(e) { console.error(e); }
         }
 
         async function loadMarketplace() {
             const grid = document.getElementById('appGrid');
-            
-            // If not connected, show dummy data or lock screen (User preference: Show content but lock actions)
             if(!contract) {
-                // Show "Locked" state for now as requested by user logic
                 grid.innerHTML = `
                 <div class="col-span-full py-24 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
                     <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10"><i data-lucide="lock" class="text-gray-500"></i></div>
@@ -561,7 +500,7 @@
             } catch(e) { grid.innerHTML = `<div class="col-span-full text-red-500 text-center">${e.message}</div>`; }
         }
 
-        // --- 4. BUILDER & LAUNCHER (FIXED) ---
+        // --- 4. BUILDER & LAUNCHER ---
         
         async function generatePreview() {
             const name = document.getElementById('buildName').value;
@@ -582,14 +521,11 @@
                 const data = await res.json();
                 if(!data.reply?.code) throw new Error("AI Generation failed.");
 
-                // Store for minting
                 document.getElementById("tempCode").value = LZString.compressToBase64(data.reply.code);
                 document.getElementById("tempIcon").value = LZString.compressToBase64(data.reply.icon || "");
 
-                // Launch Local Preview
                 launchApp(null, `PREVIEW: ${name}`, false, data.reply.code);
                 
-                // Update UI
                 document.getElementById("genBtn").classList.add("hidden");
                 document.getElementById("mintBtn").classList.remove("hidden");
                 status.innerHTML = `<span class="text-emerald-400">> Compilation Successful. Ready to Deploy.</span>`;
@@ -617,7 +553,7 @@
             } catch(e) { alert(e.message); }
         }
 
-        // FIXED LAUNCH FUNCTION
+        // --- UNIVERSAL KICKSTARTER BRIDGE (THE FIX) ---
         async function launchApp(id, title, isBlockchain, rawCode = null) {
             const win = document.getElementById('appWindow');
             const frame = document.getElementById('appFrame');
@@ -639,23 +575,49 @@
                 }
             }
 
-            // Bridge Script to inject Web3
+            // ROBUST BRIDGE SCRIPT
+            // 1. Injects styles to reset scrollbars
+            // 2. Creates a clickable overlay to capture focus
+            // 3. Tries multiple ways to start the game logic (init, start, click events)
             const bridge = `
                 <style>
                     ::-webkit-scrollbar { width: 0px; }
-                    body { margin: 0; overflow: hidden; background: #fff; }
-                    #start-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; color: #0f0; font-family: monospace; cursor: pointer; }
+                    body { margin: 0; overflow: hidden; background: #000; }
+                    #start-overlay { 
+                        position: fixed; inset: 0; background: #000; z-index: 9999; 
+                        display: flex; align-items: center; justify-content: center; 
+                        color: #0f0; font-family: monospace; font-size: 20px; cursor: pointer;
+                        border: 2px solid #0f0; margin: 20px;
+                    }
+                    #start-overlay:hover { background: #001100; }
                 </style>
-                <div id="start-overlay" onclick="this.remove()">[ CLICK TO INITIALIZE SYSTEM ]</div>
+                <div id="start-overlay" onclick="kickstart()">[ CLICK TO INITIALIZE SYSTEM ]</div>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"><\/script>
                 <script>
                     window.ethereum = window.parent.ethereum;
                     window.ethers = window.parent.ethers;
-                    console.log("Bridge Established.");
+                    
+                    function kickstart() {
+                        const ol = document.getElementById('start-overlay');
+                        ol.style.display = 'none'; // Hide overlay
+                        window.focus(); // Capture keyboard
+                        
+                        // 1. Try standard functions
+                        if(typeof startGame === 'function') startGame();
+                        else if(typeof init === 'function') init();
+                        else if(typeof boot === 'function') boot();
+                        
+                        // 2. Dispatch synthetic click (wakes up canvas listeners)
+                        const evt = new MouseEvent('click', {
+                            view: window, bubbles: true, cancelable: true
+                        });
+                        document.body.dispatchEvent(evt);
+                        
+                        console.log("System Initialized.");
+                    }
                 <\/script>
             `;
 
-            // Reset and Write
             frame.srcdoc = bridge + codeToRun;
         }
 
