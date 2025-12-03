@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spells Protocol V4 | The AI App Engine</title>
-    
+    <title>Spells Protocol V4 | AI Engine</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💠</text></svg>">
 
-    <!-- Libraries -->
+    <!-- Core -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -33,34 +30,23 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        
         #neuralCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6; }
-        
-        .glass-panel {
-            background: rgba(15, 15, 18, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Interactive Spotlight */
+        .glass-panel { background: rgba(15, 15, 18, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .spotlight-group:hover .spotlight { opacity: 1; }
-        .spotlight {
-            background: radial-gradient(600px circle at var(--x) var(--y), rgba(99, 102, 241, 0.15), transparent 40%);
-            z-index: 1;
-        }
+        .spotlight { background: radial-gradient(600px circle at var(--x) var(--y), rgba(99, 102, 241, 0.15), transparent 40%); z-index: 1; }
     </style>
 </head>
 <body class="antialiased selection:bg-indigo-500/30">
 
     <canvas id="neuralCanvas"></canvas>
     
+    <!-- Glow Effects -->
     <div class="fixed inset-0 z-0 pointer-events-none">
         <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[128px]"></div>
         <div class="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[128px]"></div>
     </div>
 
     <div class="relative z-10 flex h-screen overflow-hidden">
-        
         <!-- SIDEBAR -->
         <aside class="w-20 lg:w-72 flex-shrink-0 flex flex-col justify-between border-r border-white/5 bg-charcoal/50 backdrop-blur-xl z-50">
             <div>
@@ -73,23 +59,21 @@
                         <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Protocol V4</p>
                     </div>
                 </div>
-
                 <nav class="mt-8 space-y-2 px-2 lg:px-4">
                     <button onclick="switchTab('home')" id="nav-home" class="nav-btn active w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="home" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Overview</span>
+                        <i data-lucide="home" class="w-5 h-5"></i><span class="hidden lg:block">Overview</span>
                     </button>
                     <button onclick="switchTab('marketplace')" id="nav-marketplace" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="grid" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Marketplace</span>
+                        <i data-lucide="grid" class="w-5 h-5"></i><span class="hidden lg:block">Marketplace</span>
                     </button>
                     <button onclick="switchTab('builder')" id="nav-builder" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="sparkles" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Laboratory</span>
+                        <i data-lucide="sparkles" class="w-5 h-5"></i><span class="hidden lg:block">Laboratory</span>
                     </button>
                     <button onclick="switchTab('docs')" id="nav-docs" class="nav-btn w-full flex items-center gap-4 px-3 lg:px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                        <i data-lucide="book-open" class="w-5 h-5 group-hover:text-indigo-400"></i><span class="hidden lg:block">Documentation</span>
+                        <i data-lucide="book-open" class="w-5 h-5"></i><span class="hidden lg:block">Documentation</span>
                     </button>
                 </nav>
             </div>
-
             <div class="p-4 border-t border-white/5">
                 <button id="connectBtn" onclick="openWalletSelect()" class="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center gap-2">
                     <i data-lucide="wallet" class="w-4 h-4"></i><span class="hidden lg:inline">Connect</span>
@@ -97,81 +81,33 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTAINER -->
+        <!-- MAIN CONTENT -->
         <main id="mainContainer" class="flex-1 overflow-y-auto scroll-smooth relative" onmousemove="handleSpotlight(event)">
             
-            <!-- HOME VIEW -->
+            <!-- VIEW: HOME -->
             <section id="view-home" class="min-h-full">
                 <div class="relative pt-32 pb-20 px-8 md:px-16 max-w-7xl mx-auto">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-mono mb-6">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> V4 ENGINE ONLINE
-                    </div>
-                    
                     <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                         The Infinite <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">App Engine.</span>
                     </h1>
-                    
                     <p class="text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
                         Generate, deploy, and trade full-stack applications entirely on-chain. No servers. No IPFS. Just pure bytecode.
                     </p>
-
                     <div class="flex gap-4">
-                        <button onclick="switchTab('marketplace')" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition shadow-lg shadow-indigo-500/20 flex items-center gap-2">
-                            Explore Registry <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="switchTab('docs')" class="px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-bold transition">
-                            Architecture
-                        </button>
-                    </div>
-                </div>
-
-                <div class="px-8 md:px-16 max-w-7xl mx-auto pb-32">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
-                            <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
-                            <div class="relative z-10">
-                                <div class="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-6 border border-indigo-500/20"><i data-lucide="cpu" class="text-indigo-400 w-6 h-6"></i></div>
-                                <h3 class="text-xl font-bold text-white mb-2">AI Generation</h3>
-                                <p class="text-gray-400 text-sm">Describe any functionality in plain English. The protocol constructs the HTML, CSS, and JS logic instantly.</p>
-                            </div>
-                        </div>
-                        <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
-                            <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
-                            <div class="relative z-10">
-                                <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-6 border border-emerald-500/20"><i data-lucide="database" class="text-emerald-400 w-6 h-6"></i></div>
-                                <h3 class="text-xl font-bold text-white mb-2">SSTORE2 Storage</h3>
-                                <p class="text-gray-400 text-sm">Code is compressed via LZ-String and stored directly in contract bytecode. 100% immutable.</p>
-                            </div>
-                        </div>
-                        <div class="glass-panel p-8 rounded-2xl spotlight-group relative overflow-hidden">
-                            <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300"></div>
-                            <div class="relative z-10">
-                                <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 border border-purple-500/20"><i data-lucide="globe" class="text-purple-400 w-6 h-6"></i></div>
-                                <h3 class="text-xl font-bold text-white mb-2">Browser Runtime</h3>
-                                <p class="text-gray-400 text-sm">Apps run in a secure sandbox but maintain a bridge to the user's wallet for signing transactions.</p>
-                            </div>
-                        </div>
+                        <button onclick="switchTab('marketplace')" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition shadow-lg flex items-center gap-2">Explore Apps <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </section>
 
-            <!-- MARKETPLACE VIEW -->
+            <!-- VIEW: MARKETPLACE -->
             <section id="view-marketplace" class="hidden min-h-full p-8 md:p-16">
                 <div class="max-w-7xl mx-auto">
-                    <div class="flex justify-between items-end mb-12">
-                        <div>
-                            <h2 class="text-4xl font-bold text-white mb-2">Registry.</h2>
-                            <p class="text-gray-400">Discover decentralized intelligence.</p>
-                        </div>
+                    <div class="flex justify-between items-end mb-8">
+                        <h2 class="text-4xl font-bold text-white">Registry</h2>
                         <div class="flex gap-2">
                             <button onclick="filterCategory('All')" class="px-4 py-2 text-xs font-bold rounded-lg bg-white text-black">ALL</button>
-                            <button onclick="filterCategory('Game')" class="px-4 py-2 text-xs font-bold rounded-lg bg-white/5 text-gray-400 hover:text-white border border-white/5">GAMES</button>
-                            <button onclick="filterCategory('DeFi')" class="px-4 py-2 text-xs font-bold rounded-lg bg-white/5 text-gray-400 hover:text-white border border-white/5">DEFI</button>
+                            <button onclick="filterCategory('Game')" class="px-4 py-2 text-xs font-bold rounded-lg bg-white/5 text-gray-400 hover:text-white">GAMES</button>
                         </div>
-                    </div>
-                    <div class="relative mb-8">
-                        <i data-lucide="search" class="absolute left-4 top-3.5 text-gray-500 w-5 h-5"></i>
-                        <input id="searchBar" onkeyup="filterApps()" type="text" placeholder="Search by name, hash, or creator..." class="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-indigo-500 outline-none transition">
                     </div>
                     <div id="appGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
@@ -181,16 +117,16 @@
                 </div>
             </section>
 
-            <!-- BUILDER VIEW -->
+            <!-- VIEW: BUILDER -->
             <section id="view-builder" class="hidden min-h-full p-8 md:p-12">
                 <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <div class="glass-panel p-8 rounded-2xl h-fit">
                         <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="terminal" class="text-indigo-400"></i> Construction Kit</h2>
                         <div class="space-y-6">
-                            <input type="hidden" id="updateId"><input type="hidden" id="tempCode"><input type="hidden" id="tempIcon">
+                            <input type="hidden" id="tempCode"><input type="hidden" id="tempIcon">
                             <div>
                                 <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Application Name</label>
-                                <input id="buildName" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white focus:border-indigo-500 outline-none" placeholder="e.g. Neural Dex">
+                                <input id="buildName" class="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white focus:border-indigo-500 outline-none" placeholder="e.g. Tetris Clone">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">System Prompt</label>
@@ -217,184 +153,96 @@
                             </div>
                         </div>
                     </div>
-                    <div class="space-y-6">
-                        <div class="p-6 border border-white/10 rounded-2xl bg-white/5">
-                            <h3 class="font-bold text-white mb-2">Prompt Engineering Guide</h3>
-                            <ul class="space-y-3 text-sm text-gray-400">
-                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Be specific about visuals ("Cyberpunk").</li>
-                                <li class="flex gap-2"><i data-lucide="check-circle" class="text-emerald-500 w-4"></i> Request libraries ("Use Ethers.js").</li>
-                            </ul>
-                        </div>
-                        <div class="p-6 bg-black border border-white/10 rounded-2xl font-mono text-xs text-gray-500 h-64 overflow-hidden relative">
-                            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/80 pointer-events-none"></div>
-                            <p>> Initializing Builder Environment...</p>
-                            <p>> Connecting to Gemini 1.5 Flash...</p>
-                            <p>> Ready for input_</p>
-                        </div>
+                    <!-- Terminal -->
+                    <div class="p-6 bg-black border border-white/10 rounded-2xl font-mono text-xs text-gray-500 h-64 overflow-hidden relative">
+                        <p>> Initializing Builder Environment...</p>
+                        <p>> Ready for input_</p>
                     </div>
                 </div>
             </section>
 
-            <!-- DOCS VIEW (FIXED & SCROLLABLE) -->
+            <!-- VIEW: DOCS -->
             <section id="view-docs" class="hidden min-h-full p-8 md:p-16 max-w-6xl mx-auto">
-                <div class="mb-12 border-b border-white/10 pb-8">
-                    <h1 class="text-5xl font-bold text-white mb-4">Documentation</h1>
-                    <p class="text-xl text-gray-400">Technical reference for Spells Protocol V4.</p>
-                </div>
-
+                <h1 class="text-5xl font-bold text-white mb-8">Documentation</h1>
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                    <!-- FIXED SIDEBAR FOR DOCS -->
-                    <div class="hidden lg:block space-y-2 text-sm sticky top-8 h-fit">
-                        <p class="text-white font-bold mb-4 uppercase tracking-widest text-xs">Table of Contents</p>
-                        <button onclick="scrollToDoc('doc-intro')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Introduction</button>
-                        <button onclick="scrollToDoc('doc-arch')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Architecture</button>
-                        <button onclick="scrollToDoc('doc-store')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">SSTORE2 Storage</button>
-                        <button onclick="scrollToDoc('doc-runtime')" class="block text-gray-400 hover:text-indigo-400 text-left transition w-full">Runtime Sandbox</button>
+                    <div class="space-y-2 sticky top-8 h-fit">
+                        <button onclick="scrollToDoc('doc-intro')" class="block text-gray-400 hover:text-white transition">Introduction</button>
+                        <button onclick="scrollToDoc('doc-arch')" class="block text-gray-400 hover:text-white transition">Architecture</button>
                     </div>
-
-                    <!-- DOCS CONTENT -->
                     <div class="lg:col-span-3 space-y-16">
-                        
-                        <div id="doc-intro" class="scroll-mt-12">
+                        <div id="doc-intro">
                             <h3 class="text-2xl font-bold text-white mb-4">Introduction</h3>
-                            <p class="text-gray-400 leading-relaxed mb-6">
-                                Spells Protocol is an experimental "AI-to-Blockchain" pipeline. It allows users to prompt an LLM to generate functional HTML5 applications, which are then compressed and stored immutably on the Monad Blockchain.
-                            </p>
+                            <p class="text-gray-400">Spells Protocol stores full HTML5 applications on the Monad Blockchain using SSTORE2.</p>
                         </div>
-
-                        <div id="doc-arch" class="scroll-mt-12">
-                            <h3 class="text-2xl font-bold text-white mb-4">Protocol Architecture</h3>
-                            <div class="bg-black/50 p-6 rounded-xl border border-white/10 relative overflow-hidden">
-                                <div class="font-mono text-xs text-indigo-300">
-                                    [ USER PROMPT ] --> [ GOOGLE GEMINI ] --> [ HTML CODE ]<br>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ LZ-STRING COMPRESSION ]<br>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
-                                    [ MONAD BLOCKCHAIN ] <-- [ SSTORE2 POINTER ]
-                                </div>
-                            </div>
+                        <div id="doc-arch">
+                            <h3 class="text-2xl font-bold text-white mb-4">Architecture</h3>
+                            <p class="text-gray-400">The `SpellsProtocolV4` contract maps Token IDs to data pointers. `getCode(id)` retrieves the compressed string.</p>
                         </div>
-
-                        <div id="doc-store" class="scroll-mt-12">
-                            <h3 class="text-2xl font-bold text-white mb-4">SSTORE2 Storage</h3>
-                            <p class="text-gray-400 leading-relaxed mb-6">
-                                Traditional NFTs store metadata on IPFS, which is mutable and can go offline. Spells Protocol uses the `SSTORE2` pattern to write bytecode directly to a contract address. This data is part of the blockchain state and cannot be deleted.
-                            </p>
-                        </div>
-
-                        <div id="doc-runtime" class="scroll-mt-12">
-                            <h3 class="text-2xl font-bold text-white mb-4">Runtime Sandbox</h3>
-                            <p class="text-gray-400 leading-relaxed mb-4">
-                                When launching an app, the browser performs a real-time decompression. To allow the app to interact with Web3 without compromising the user's security, we inject a secure bridge.
-                            </p>
-                            <div class="bg-black/50 p-4 rounded-xl border border-white/10 font-mono text-xs text-gray-500">
-                                // The Injection Bridge (Simplified)<br>
-                                window.ethereum = window.parent.ethereum;<br>
-                                window.ethers = window.parent.ethers;
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
 
     <!-- APP RUNNER -->
-    <div id="appWindow" class="fixed inset-0 z-[100] bg-[#050505] hidden flex flex-col transition-opacity duration-300">
+    <div id="appWindow" class="fixed inset-0 z-[100] bg-[#050505] hidden flex flex-col">
         <div class="h-14 border-b border-white/5 bg-[#0F0F12] flex justify-between items-center px-6">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span class="text-sm font-mono text-gray-400 tracking-widest uppercase" id="appWindowTitle">Runtime Environment</span>
-            </div>
-            <button onclick="closeAppWindow()" class="text-xs bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20 transition">Terminate</button>
+            <span class="text-sm font-mono text-gray-400 uppercase">Runtime Environment</span>
+            <button onclick="closeAppWindow()" class="text-xs bg-red-500/10 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20">Terminate</button>
         </div>
-        <div class="flex-1 relative">
-            <iframe id="appFrame" class="w-full h-full border-none bg-white"></iframe>
-        </div>
+        <div class="flex-1 relative"><iframe id="appFrame" class="w-full h-full border-none bg-white"></iframe></div>
     </div>
 
     <!-- WALLET MODAL -->
     <div id="walletModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
-        <div class="glass-panel p-8 rounded-2xl w-96 shadow-2xl transform transition-all scale-95">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-white">Connect Wallet</h3>
-                <button onclick="closeWalletSelect()" class="text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            <button onclick="selectWallet('metamask')" class="w-full bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-xl flex items-center justify-between mb-3 transition group">
-                <span class="font-bold text-gray-300 group-hover:text-white">MetaMask</span>
-                <div class="w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_10px_orange]"></div>
-            </button>
-            <button onclick="selectWallet('phantom')" class="w-full bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-xl flex items-center justify-between transition group">
-                <span class="font-bold text-gray-300 group-hover:text-white">Phantom</span>
-                <div class="w-3 h-3 bg-purple-500 rounded-full shadow-[0_0_10px_purple]"></div>
-            </button>
+        <div class="glass-panel p-8 rounded-2xl w-96 shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-6">Connect Wallet</h3>
+            <button onclick="selectWallet('metamask')" class="w-full bg-white/5 border border-white/5 p-4 rounded-xl flex justify-between mb-3 hover:bg-white/10 text-white">MetaMask</button>
+            <button onclick="closeWalletSelect()" class="text-gray-500 hover:text-white w-full text-center text-sm mt-4">Cancel</button>
         </div>
     </div>
 
     <script>
-        // --- 1. NEURAL NETWORK BACKGROUND ---
+        // --- CONFIGURATION ---
+        // ⚠️ PASTE YOUR ADDRESS BELOW OR IT WON'T WORK ⚠️
+        const CONTRACT_ADDRESS = "0x8Ab9...PASTE_FULL_ADDRESS_HERE..."; 
+        
+        const ABI = [
+            "function appCount() view returns (uint256)",
+            "function createApp(string, string, string, string, uint256) public payable",
+            "function buyApp(uint256) public payable",
+            "function getAppInfo(uint256) view returns (string, uint256, address, string, string, uint256)",
+            "function hasAccess(uint256, address) view returns (bool)",
+            "function getCode(uint256) view returns (string)"
+        ];
+
+        lucide.createIcons();
+        let provider, signer, contract, userAddress, currentFilter='All';
+
+        // --- BACKGROUND ---
         const canvas = document.getElementById('neuralCanvas');
         const ctx = canvas.getContext('2d');
         let width, height, nodes = [];
         const mouse = { x: null, y: null, radius: 150 };
-
         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; initNodes(); }
         window.addEventListener('resize', resize);
         window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-
-        function initNodes() {
-            nodes = [];
-            const density = Math.floor(width * height / 15000); 
-            for(let i=0; i<density; i++){
-                nodes.push({
-                    x: Math.random() * width, y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
-                    size: Math.random() * 2
-                });
-            }
-        }
-
+        function initNodes() { nodes = []; for(let i=0; i<50; i++) nodes.push({ x: Math.random()*width, y: Math.random()*height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 }); }
         function animateNodes() {
-            ctx.clearRect(0,0,width,height);
-            ctx.fillStyle = '#6366f1'; 
-            ctx.strokeStyle = '#6366f1';
-            
-            nodes.forEach(node => {
-                node.x += node.vx; node.y += node.vy;
-                if(node.x < 0 || node.x > width) node.vx *= -1;
-                if(node.y < 0 || node.y > height) node.vy *= -1;
-
-                ctx.globalAlpha = 0.5;
-                ctx.beginPath(); ctx.arc(node.x, node.y, node.size, 0, Math.PI*2); ctx.fill();
-
-                nodes.forEach(other => {
-                    const dx = node.x - other.x;
-                    const dy = node.y - other.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    if(dist < 100) {
-                        ctx.globalAlpha = (1 - dist/100) * 0.2;
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(other.x, other.y); ctx.stroke();
-                    }
+            ctx.clearRect(0,0,width,height); ctx.fillStyle='#6366f1'; ctx.strokeStyle='#6366f1';
+            nodes.forEach(n => {
+                n.x+=n.vx; n.y+=n.vy; if(n.x<0||n.x>width)n.vx*=-1; if(n.y<0||n.y>height)n.vy*=-1;
+                ctx.globalAlpha=0.5; ctx.beginPath(); ctx.arc(n.x,n.y,2,0,Math.PI*2); ctx.fill();
+                nodes.forEach(o => {
+                    const d = Math.hypot(n.x-o.x, n.y-o.y);
+                    if(d<100) { ctx.globalAlpha=(1-d/100)*0.2; ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(o.x,o.y); ctx.stroke(); }
                 });
-
-                const mdx = mouse.x - node.x;
-                const mdy = mouse.y - node.y;
-                const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
-                if(mdist < mouse.radius) {
-                    ctx.globalAlpha = (1 - mdist/mouse.radius) * 0.5;
-                    ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
-                }
             });
             requestAnimationFrame(animateNodes);
         }
         initNodes(); animateNodes();
 
-        // --- 2. UI LOGIC ---
-        lucide.createIcons();
-        
+        // --- UI & TABS ---
         function handleSpotlight(e) {
             document.querySelectorAll('.spotlight').forEach(el => {
                 const rect = el.parentElement.getBoundingClientRect();
@@ -402,67 +250,34 @@
                 el.style.setProperty('--y', (e.clientY - rect.top) + 'px');
             });
         }
-
         function switchTab(id) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-white', 'bg-white/5');
-                b.classList.add('text-gray-400');
-            });
-            const activeBtn = document.getElementById(`nav-${id}`);
-            if(activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
-                activeBtn.classList.add('text-white', 'bg-white/5');
-            }
-            if(id === 'marketplace') loadMarketplace();
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('text-white', 'bg-white/5'));
+            document.getElementById(`nav-${id}`).classList.add('text-white', 'bg-white/5');
+            if(id==='marketplace') loadMarketplace();
         }
+        function scrollToDoc(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
 
-        function scrollToDoc(id) {
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- 3. WEB3 & APP ENGINE ---
-        const CONTRACT_ADDRESS = "0x53830d0F28182e0EB8F1C563AC67C6eDD0cD301b";
-        const ABI = ["function appCount() view returns (uint256)", "function createApp(string, string, string, string, uint256) public payable", "function buyApp(uint256) public payable", "function getAppInfo(uint256) view returns (string, uint256, address, string, string, uint256)", "function hasAccess(uint256, address) view returns (bool)", "function getCode(uint256) view returns (string)"];
-        let provider, signer, contract, userAddress;
-
+        // --- WEB3 ---
         function openWalletSelect() { document.getElementById('walletModal').classList.remove('hidden'); }
         function closeWalletSelect() { document.getElementById('walletModal').classList.add('hidden'); }
-
         async function selectWallet(type) {
             closeWalletSelect();
-            try {
-                const p = type === 'metamask' ? window.ethereum : window.phantom?.ethereum;
-                if(!p) return alert("Wallet not detected.");
-                
-                provider = new ethers.providers.Web3Provider(p);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                userAddress = await signer.getAddress();
-                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                
-                document.getElementById('connectBtn').innerHTML = `<i data-lucide="user" class="w-4 h-4"></i> ${userAddress.slice(0,6)}...`;
-                if(!document.getElementById('view-marketplace').classList.contains('hidden')) loadMarketplace();
-            } catch(e) { console.error(e); }
+            if(!window.ethereum) return alert("Wallet not found");
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            userAddress = await signer.getAddress();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            document.getElementById('connectBtn').innerHTML = `${userAddress.slice(0,6)}...`;
+            loadMarketplace();
         }
 
         async function loadMarketplace() {
             const grid = document.getElementById('appGrid');
-            if(!contract) {
-                grid.innerHTML = `
-                <div class="col-span-full py-24 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
-                    <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10"><i data-lucide="lock" class="text-gray-500"></i></div>
-                    <h3 class="text-xl font-bold text-white">Wallet Connection Required</h3>
-                    <p class="text-gray-500 mt-2">Connect to Monad Devnet to access the registry.</p>
-                </div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            grid.innerHTML = `<div class="col-span-full text-center py-20 animate-pulse text-indigo-400">Syncing with Chain...</div>`;
-            
+            if(!contract) return;
+            grid.innerHTML = `<div class="col-span-full text-center py-20 text-indigo-400">Loading...</div>`;
             try {
                 const count = await contract.appCount();
                 let html = "";
@@ -470,69 +285,62 @@
                     const info = await contract.getAppInfo(i);
                     const isOwned = await contract.hasAccess(i, userAddress);
                     const isCreator = info[2].toLowerCase() === userAddress.toLowerCase();
+                    if(currentFilter !== 'All' && info[4] !== currentFilter) continue;
                     
-                    let icon = '<div class="text-3xl">💠</div>';
+                    let icon = '💠';
                     try { if(info[3]) icon = LZString.decompressFromBase64(info[3]) || icon; } catch(e){}
 
                     html += `
-                    <div class="glass-panel p-5 rounded-2xl spotlight-group relative group hover:-translate-y-1 transition duration-300">
+                    <div class="glass-panel p-5 rounded-2xl spotlight-group relative hover:-translate-y-1 transition">
                         <div class="spotlight absolute -inset-px opacity-0 transition-opacity duration-300 rounded-2xl"></div>
                         <div class="relative z-10">
-                            <div class="h-40 bg-black/40 rounded-xl mb-4 flex items-center justify-center border border-white/5 group-hover:border-indigo-500/30 transition overflow-hidden">
-                                <div class="scale-100 group-hover:scale-110 transition-transform duration-500">${icon}</div>
-                            </div>
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-white text-lg truncate">${info[0]}</h3>
-                                <span class="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-400 uppercase">${info[4] || 'App'}</span>
-                            </div>
-                            <p class="text-xs text-gray-500 font-mono mb-4">DEV: ${info[2].slice(0,6)}...</p>
-                            <div class="flex gap-2">
+                            <div class="h-40 bg-black/40 rounded-xl mb-4 flex items-center justify-center overflow-hidden border border-white/5">${icon}</div>
+                            <h3 class="font-bold text-white truncate">${info[0]}</h3>
+                            <div class="flex gap-2 mt-4">
                                 ${isOwned || isCreator
-                                    ? `<button onclick="launchApp(${i}, '${info[0]}', true)" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-sm transition">Launch</button>`
-                                    : `<button onclick="buyApp(${i}, '${ethers.utils.formatEther(info[1])}')" class="flex-1 bg-white hover:bg-gray-200 text-black py-2 rounded-lg font-bold text-sm transition flex justify-between px-4"><span>Buy</span><span>${ethers.utils.formatEther(info[1])} MON</span></button>`
+                                    ? `<button onclick="launchApp(${i}, '${info[0]}', true)" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-xs">Launch</button>`
+                                    : `<button onclick="buyApp(${i}, '${ethers.utils.formatEther(info[1])}')" class="flex-1 bg-white hover:bg-gray-200 text-black py-2 rounded-lg font-bold text-xs">Buy ${ethers.utils.formatEther(info[1])} M</button>`
                                 }
                             </div>
                         </div>
                     </div>`;
                 }
-                grid.innerHTML = html || `<div class="col-span-full text-center text-gray-500">Registry Empty.</div>`;
+                grid.innerHTML = html || `<div class="col-span-full text-center text-gray-500">No Apps Found</div>`;
                 lucide.createIcons();
             } catch(e) { grid.innerHTML = `<div class="col-span-full text-red-500 text-center">${e.message}</div>`; }
         }
 
-        // --- 4. BUILDER & LAUNCHER ---
-        
         async function generatePreview() {
             const name = document.getElementById('buildName').value;
             const prompt = document.getElementById('buildPrompt').value;
             const status = document.getElementById('compileStatus');
             
-            if(!name || !prompt) return alert("Please fill in Name and Prompt.");
-            
+            if(!name || !prompt) return alert("Fill all fields");
             status.classList.remove('hidden');
-            status.innerHTML = `<span class="animate-pulse text-indigo-400">> Sending instructions to Neural Core...</span>`;
-            status.className = "p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-lg font-mono text-xs text-indigo-300";
+            status.innerHTML = `<span class="animate-pulse text-indigo-400">Generating...</span>`;
+            status.className = "p-4 bg-indigo-900/20 rounded-lg font-mono text-xs text-indigo-300";
 
             try {
                 const res = await fetch("/api/chat", {
                     method: "POST", headers: {"Content-Type":"application/json"},
-                    body: JSON.stringify({ prompt: `App:${name}. Req:${prompt}`, message: "Generate V3 JSON" })
+                    body: JSON.stringify({ prompt: `App:${name}. Req:${prompt}`, message: "Generate Code" })
                 });
                 const data = await res.json();
-                if(!data.reply?.code) throw new Error("AI Generation failed.");
+                
+                if(data.error) throw new Error(data.details || data.error);
+                if(!data.reply?.code) throw new Error("No code returned");
 
                 document.getElementById("tempCode").value = LZString.compressToBase64(data.reply.code);
                 document.getElementById("tempIcon").value = LZString.compressToBase64(data.reply.icon || "");
 
+                // Launch Local Preview
                 launchApp(null, `PREVIEW: ${name}`, false, data.reply.code);
                 
                 document.getElementById("genBtn").classList.add("hidden");
                 document.getElementById("mintBtn").classList.remove("hidden");
-                status.innerHTML = `<span class="text-emerald-400">> Compilation Successful. Ready to Deploy.</span>`;
-                status.className = "p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-lg font-mono text-xs text-emerald-300";
-
+                status.innerHTML = `<span class="text-emerald-400">Success. Ready to Deploy.</span>`;
             } catch(e) {
-                status.innerHTML = `<span class="text-red-400">> Error: ${e.message}</span>`;
+                status.innerHTML = `<span class="text-red-400">Error: ${e.message}</span>`;
             }
         }
 
@@ -548,89 +356,81 @@
                     { value: ethers.utils.parseEther("50") }
                 );
                 await tx.wait();
-                alert("Deployment Successful!");
+                alert("Deployed!");
                 switchTab('marketplace');
             } catch(e) { alert(e.message); }
         }
 
-        // --- UNIVERSAL KICKSTARTER BRIDGE (THE FIX) ---
+        async function buyApp(id, price) {
+            try {
+                const tx = await contract.buyApp(id, { value: ethers.utils.parseEther(price) });
+                await tx.wait();
+                loadMarketplace();
+            } catch(e) { alert(e.message); }
+        }
+
+        function filterCategory(cat) { currentFilter = cat; loadMarketplace(); }
+        function filterApps() {
+            const q = document.getElementById("searchBar").value.toLowerCase();
+            document.querySelectorAll(".glass-panel").forEach(el => {
+                el.style.display = el.innerText.toLowerCase().includes(q) ? "block" : "none";
+            });
+        }
+
+        // --- LAUNCHER LOGIC (FIXED) ---
         async function launchApp(id, title, isBlockchain, rawCode = null) {
             const win = document.getElementById('appWindow');
             const frame = document.getElementById('appFrame');
             
             win.classList.remove('hidden');
-            document.getElementById('appWindowTitle').innerText = title;
             
             let codeToRun = rawCode;
 
-            if (isBlockchain && id !== null) {
+            if (isBlockchain) {
                 try {
                     const compressed = await contract.getCode(id);
-                    if(!compressed) throw new Error("No code found on-chain.");
+                    if(!compressed) throw new Error("No code found.");
                     codeToRun = LZString.decompressFromBase64(compressed);
                 } catch(e) {
-                    alert("Blockchain Read Error: " + e.message);
+                    alert("Error loading app: " + e.message);
                     closeAppWindow();
                     return;
                 }
             }
 
-            // ROBUST BRIDGE SCRIPT
-            // 1. Injects styles to reset scrollbars
-            // 2. Creates a clickable overlay to capture focus
-            // 3. Tries multiple ways to start the game logic (init, start, click events)
+            // Universal Starter Bridge
             const bridge = `
                 <style>
-                    ::-webkit-scrollbar { width: 0px; }
                     body { margin: 0; overflow: hidden; background: #000; }
-                    #start-overlay { 
-                        position: fixed; inset: 0; background: #000; z-index: 9999; 
+                    #start-btn { 
+                        position: fixed; inset: 0; z-index: 9999; 
                         display: flex; align-items: center; justify-content: center; 
-                        color: #0f0; font-family: monospace; font-size: 20px; cursor: pointer;
-                        border: 2px solid #0f0; margin: 20px;
+                        background: rgba(0,0,0,0.9); color: #0f0; 
+                        font-family: monospace; font-size: 24px; cursor: pointer;
                     }
-                    #start-overlay:hover { background: #001100; }
                 </style>
-                <div id="start-overlay" onclick="kickstart()">[ CLICK TO INITIALIZE SYSTEM ]</div>
+                <div id="start-btn" onclick="startSystem()">[ CLICK TO START ]</div>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"><\/script>
                 <script>
                     window.ethereum = window.parent.ethereum;
-                    window.ethers = window.parent.ethers;
-                    
-                    function kickstart() {
-                        const ol = document.getElementById('start-overlay');
-                        ol.style.display = 'none'; // Hide overlay
-                        window.focus(); // Capture keyboard
-                        
-                        // 1. Try standard functions
-                        if(typeof startGame === 'function') startGame();
-                        else if(typeof init === 'function') init();
-                        else if(typeof boot === 'function') boot();
-                        
-                        // 2. Dispatch synthetic click (wakes up canvas listeners)
-                        const evt = new MouseEvent('click', {
-                            view: window, bubbles: true, cancelable: true
-                        });
-                        document.body.dispatchEvent(evt);
-                        
-                        console.log("System Initialized.");
+                    function startSystem() {
+                        document.getElementById('start-btn').remove();
+                        // Try every common entry point
+                        if(typeof startGame == 'function') startGame();
+                        else if(typeof init == 'function') init();
+                        else if(typeof setup == 'function') setup();
+                        else if(typeof main == 'function') main();
+                        // Force a click on body to wake up audio contexts
+                        document.body.click();
                     }
                 <\/script>
             `;
-
             frame.srcdoc = bridge + codeToRun;
         }
 
         function closeAppWindow() {
             document.getElementById('appWindow').classList.add('hidden');
             document.getElementById('appFrame').srcdoc = "";
-        }
-
-        function buyApp(id, price) {
-            contract.buyApp(id, {value: ethers.utils.parseEther(price)})
-            .then(tx => tx.wait())
-            .then(() => loadMarketplace())
-            .catch(e => alert(e.message));
         }
     </script>
 </body>
