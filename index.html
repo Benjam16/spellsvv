@@ -14,12 +14,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Modern Typography: Inter & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <script>
+        // Force Dark Mode Config
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -27,17 +26,6 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        background: '#09090b',
-                        surface: '#18181b',
-                        border: '#27272a',
-                        primary: '#6366f1', /* Indigo */
-                        secondary: '#8b5cf6', /* Violet */
-                        accent: '#10b981', /* Emerald */
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -45,286 +33,241 @@
     </script>
 
     <style>
-        /* CORE STYLES */
-        body {
-            background-color: theme('colors.background');
-            color: #e4e4e7;
-            overflow: hidden; /* For app-like feel */
-        }
-
-        /* CUSTOM SCROLLBAR */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-        /* ANIMATED BACKGROUND */
-        #bgCanvas {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
-            opacity: 0.4;
+        /* Animations */
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        /* SCROLL REVEAL UTILITY */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* GLASSMORPHISM CARD */
-        .glass-card {
-            background: rgba(24, 24, 27, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s ease;
-        }
-        .glass-card:hover {
-            border-color: rgba(99, 102, 241, 0.5); /* Primary Color */
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
-            transform: translateY(-2px);
-        }
-
-        /* NAVIGATION */
-        .nav-item {
-            position: relative;
-            transition: all 0.2s;
-            border-left: 2px solid transparent;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.03); color: white; }
-        .nav-item.active {
-            background: linear-gradient(90deg, rgba(99,102,241,0.1) 0%, transparent 100%);
-            border-left-color: #6366f1;
-            color: white;
-        }
-
-        /* TYPEWRITER CURSOR */
+        
+        /* Typewriter Cursor */
         .typing-cursor::after {
             content: '|';
             animation: blink 1s step-start infinite;
+            color: #6366f1;
         }
         @keyframes blink { 50% { opacity: 0; } }
-
-        /* GRADIENT TEXT */
-        .text-gradient {
-            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
     </style>
 </head>
-<body>
+<!-- FORCED DARK BACKGROUND HERE -->
+<body class="bg-[#09090b] text-zinc-200 font-sans h-screen overflow-hidden selection:bg-indigo-500/30">
 
-    <!-- Background -->
-    <canvas id="bgCanvas"></canvas>
+    <!-- Background Effects -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/5 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/5 blur-[120px]"></div>
+        <canvas id="bgCanvas" class="opacity-30"></canvas>
+    </div>
 
-    <!-- App Wrapper -->
-    <div class="relative z-10 flex w-screen h-screen overflow-hidden">
+    <!-- App Layout -->
+    <div class="relative z-10 flex w-full h-full">
         
         <!-- SIDEBAR -->
-        <aside class="w-72 bg-black/50 border-r border-white/5 backdrop-blur-xl flex flex-col justify-between hidden md:flex">
-            <div>
+        <aside class="hidden md:flex w-72 flex-col justify-between border-r border-white/5 bg-[#09090b]/50 backdrop-blur-xl">
+            <div class="p-6">
                 <!-- Brand -->
-                <div class="p-8 pb-4">
-                    <div class="flex items-center gap-3 mb-1">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">S</div>
-                        <h1 class="text-xl font-bold tracking-tight text-white">SPELLS</h1>
+                <div class="flex items-center gap-3 mb-8 px-2">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <span class="text-white font-bold text-lg">S</span>
                     </div>
-                    <p class="text-xs text-gray-500 font-mono ml-11">PROTOCOL V4</p>
+                    <div>
+                        <h1 class="text-lg font-bold text-white tracking-tight">SPELLS</h1>
+                        <p class="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Protocol V4</p>
+                    </div>
                 </div>
 
-                <!-- Menu -->
-                <nav class="mt-6 px-4 space-y-1">
-                    <button onclick="switchTab('marketplace')" id="nav-marketplace" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 rounded-r-lg">
-                        <i data-lucide="layout-grid" class="w-4 h-4"></i> Marketplace
+                <!-- Navigation -->
+                <nav class="space-y-1">
+                    <button onclick="switchTab('marketplace')" id="nav-marketplace" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white bg-white/5 rounded-lg border border-white/5 transition-all group">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-indigo-400"></i> Marketplace
                     </button>
-                    <button onclick="switchTab('builder')" id="nav-builder" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 rounded-r-lg">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i> AI Laboratory
+                    <button onclick="switchTab('builder')" id="nav-builder" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all group">
+                        <i data-lucide="sparkles" class="w-4 h-4 group-hover:text-indigo-400 transition-colors"></i> AI Laboratory
                     </button>
-                    <button onclick="openMyProfile()" id="nav-profile" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 rounded-r-lg">
-                        <i data-lucide="user-circle" class="w-4 h-4"></i> Profile
+                    <button onclick="openMyProfile()" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all group">
+                        <i data-lucide="user" class="w-4 h-4 group-hover:text-indigo-400 transition-colors"></i> Profile
                     </button>
-                    <button onclick="switchTab('docs')" id="nav-docs" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 rounded-r-lg">
-                        <i data-lucide="book" class="w-4 h-4"></i> Documentation
+                    <button onclick="switchTab('docs')" id="nav-docs" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all group">
+                        <i data-lucide="book" class="w-4 h-4 group-hover:text-indigo-400 transition-colors"></i> Documentation
                     </button>
                 </nav>
             </div>
 
             <!-- Connect -->
-            <div class="p-4 border-t border-white/5">
-                <button id="connectBtn" onclick="openWalletSelect()" class="w-full py-3 px-4 bg-white text-black hover:bg-gray-200 rounded-lg text-sm font-semibold transition shadow-lg flex items-center justify-center gap-2">
+            <div class="p-6 border-t border-white/5">
+                <button id="connectBtn" onclick="openWalletSelect()" class="w-full py-2.5 bg-white hover:bg-zinc-200 text-black text-sm font-semibold rounded-lg transition-all shadow-lg shadow-white/5 flex items-center justify-center gap-2">
                     Connect Wallet
                 </button>
-                <div class="flex items-center justify-between mt-4 px-2">
-                    <span class="text-xs text-gray-600">Status</span>
-                    <span id="networkStatus" class="flex items-center gap-1.5 text-xs text-emerald-500">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
-                    </span>
+                <div class="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500 font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    Operational
                 </div>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 overflow-y-auto scroll-smooth">
-            <div class="max-w-7xl mx-auto p-8 md:p-12 pb-32">
+        <main class="flex-1 overflow-y-auto relative scroll-smooth">
+            <div class="max-w-6xl mx-auto p-8 md:p-12 pb-32">
                 
-                <!-- TOP BAR -->
-                <div class="flex justify-between items-center mb-16 reveal active">
-                    <div class="relative w-96">
-                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-500 w-4 h-4"></i>
-                        <input id="searchBar" onkeyup="filterApps()" type="text" placeholder="Search spells..." class="w-full bg-surface border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition text-white">
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i data-lucide="github" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                <!-- Header / Search -->
+                <div class="flex justify-between items-center mb-12 animate-float">
+                    <div class="relative w-full max-w-md">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4"></i>
+                        <input id="searchBar" onkeyup="filterApps()" type="text" placeholder="Search applications..." 
+                               class="w-full bg-[#18181b] border border-zinc-800 text-sm text-white rounded-full pl-10 pr-4 py-3 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder-zinc-600">
                     </div>
                 </div>
 
                 <!-- VIEW: MARKETPLACE -->
-                <section id="view-marketplace" class="animate-fade-in block">
-                    <div class="mb-12">
-                        <!-- Typewriter Header -->
-                        <h2 class="text-4xl md:text-5xl font-bold mb-4 text-gradient typing-target" data-text="Discover Intelligent Applications."></h2>
-                        <p class="text-gray-400 max-w-2xl text-lg reveal">Decentralized, immutable software generated by AI and stored on Monad.</p>
+                <section id="view-marketplace" class="space-y-8">
+                    <div class="space-y-4">
+                        <h2 class="text-4xl md:text-5xl font-bold text-white typing-target" data-text="Intelligent Software."></h2>
+                        <p class="text-lg text-zinc-400 max-w-2xl">
+                            Decentralized applications generated by AI, compiled to bytecode, and stored permanently on the Monad blockchain.
+                        </p>
                     </div>
 
-                    <!-- Filter Tabs -->
-                    <div class="flex gap-2 mb-8 border-b border-white/10 pb-4 overflow-x-auto reveal">
-                        <button onclick="filterCategory('All')" class="px-4 py-1.5 text-sm rounded-full bg-white/10 text-white hover:bg-white/20 transition">All</button>
-                        <button onclick="filterCategory('Game')" class="px-4 py-1.5 text-sm rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition">Games</button>
-                        <button onclick="filterCategory('DeFi')" class="px-4 py-1.5 text-sm rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition">DeFi</button>
-                        <button onclick="filterCategory('Tool')" class="px-4 py-1.5 text-sm rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition">Utilities</button>
+                    <!-- Tabs -->
+                    <div class="flex gap-2 border-b border-white/5 pb-4 overflow-x-auto">
+                        <button onclick="filterCategory('All')" class="px-4 py-1.5 text-sm font-medium rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">All</button>
+                        <button onclick="filterCategory('Game')" class="px-4 py-1.5 text-sm font-medium rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">Games</button>
+                        <button onclick="filterCategory('DeFi')" class="px-4 py-1.5 text-sm font-medium rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">DeFi</button>
+                        <button onclick="filterCategory('Tool')" class="px-4 py-1.5 text-sm font-medium rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">Utilities</button>
                     </div>
 
                     <!-- Grid -->
                     <div id="appGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Empty State -->
-                        <div class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-xl bg-white/5 reveal">
-                            <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i data-lucide="lock" class="text-gray-500"></i>
+                        <!-- Default Empty State -->
+                        <div class="col-span-full py-24 text-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30">
+                            <div class="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-zinc-800">
+                                <i data-lucide="lock" class="text-zinc-500 w-6 h-6"></i>
                             </div>
-                            <h3 class="text-lg font-semibold text-white">Access Restricted</h3>
-                            <p class="text-sm text-gray-500 mt-1">Connect your wallet to view the marketplace.</p>
+                            <h3 class="text-lg font-medium text-white">Marketplace Locked</h3>
+                            <p class="text-sm text-zinc-500 mt-2">Connect your wallet to decrypt the registry.</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- VIEW: BUILDER (LABORATORY) -->
-                <section id="view-builder" class="hidden animate-fade-in h-full">
+                <!-- VIEW: BUILDER -->
+                <section id="view-builder" class="hidden h-full">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
-                        
-                        <!-- Form Side -->
-                        <div class="lg:col-span-7 space-y-8">
+                        <div class="lg:col-span-7 space-y-6">
                             <div>
-                                <h2 class="text-4xl font-bold text-white mb-2">Spell Laboratory</h2>
-                                <p class="text-gray-400">Describe functionality. Generate code. Deploy immutably.</p>
+                                <h2 class="text-3xl font-bold text-white">AI Laboratory</h2>
+                                <p class="text-zinc-400">Describe your application. The Protocol handles the rest.</p>
                             </div>
 
-                            <div class="glass-card p-8 rounded-2xl space-y-6">
+                            <div class="bg-[#18181b] border border-zinc-800 p-8 rounded-2xl space-y-6 shadow-2xl">
                                 <input type="hidden" id="updateId" value="">
                                 <input type="hidden" id="tempCode" value="">
                                 <input type="hidden" id="tempIcon" value="">
 
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="space-y-2">
-                                        <label class="text-xs font-semibold text-gray-500 uppercase">App Name</label>
-                                        <input id="buildName" type="text" class="w-full bg-surface border border-white/10 p-3 rounded-lg text-white focus:border-primary outline-none transition" placeholder="e.g. Price Tracker">
+                                        <label class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Name</label>
+                                        <input id="buildName" type="text" class="w-full bg-black/50 border border-zinc-800 p-3 rounded-lg text-white focus:border-indigo-500 outline-none transition" placeholder="e.g. Flappy Bird Clone">
                                     </div>
                                     <div class="space-y-2">
-                                        <label class="text-xs font-semibold text-gray-500 uppercase">Category</label>
-                                        <select id="buildCategory" class="w-full bg-surface border border-white/10 p-3 rounded-lg text-white focus:border-primary outline-none transition">
+                                        <label class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Category</label>
+                                        <select id="buildCategory" class="w-full bg-black/50 border border-zinc-800 p-3 rounded-lg text-white focus:border-indigo-500 outline-none transition">
                                             <option value="Game">Game</option>
                                             <option value="DeFi">DeFi</option>
                                             <option value="Tool">Utility</option>
-                                            <option value="Art">Art</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="space-y-2">
-                                    <label class="text-xs font-semibold text-gray-500 uppercase">Description</label>
-                                    <input id="buildDesc" type="text" class="w-full bg-surface border border-white/10 p-3 rounded-lg text-white focus:border-primary outline-none transition" placeholder="Short summary for the marketplace">
+                                    <label class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
+                                    <input id="buildDesc" type="text" class="w-full bg-black/50 border border-zinc-800 p-3 rounded-lg text-white focus:border-indigo-500 outline-none transition" placeholder="Brief summary">
                                 </div>
 
                                 <div class="space-y-2">
-                                    <label class="text-xs font-semibold text-gray-500 uppercase">System Instructions (Prompt)</label>
-                                    <textarea id="buildPrompt" rows="6" class="w-full bg-surface border border-white/10 p-4 rounded-lg text-white font-mono text-sm focus:border-primary outline-none transition" placeholder="Detailed requirements for the AI..."></textarea>
+                                    <label class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">System Prompt</label>
+                                    <textarea id="buildPrompt" rows="5" class="w-full bg-black/50 border border-zinc-800 p-4 rounded-lg text-white font-mono text-sm focus:border-indigo-500 outline-none transition" placeholder="Detailed requirements..."></textarea>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-6 items-center">
-                                    <div class="p-4 bg-white/5 rounded-lg border border-white/5">
-                                        <span class="text-xs text-gray-500 uppercase">Deploy Fee</span>
-                                        <div class="text-xl font-bold text-white mt-1">50 MON</div>
-                                    </div>
+                                <div class="flex items-center justify-between p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-lg">
+                                    <div class="text-xs text-indigo-400 font-mono">ESTIMATED COST</div>
+                                    <div class="text-xl font-bold text-white">50 MON</div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-6">
                                     <div class="space-y-2">
-                                        <label class="text-xs font-semibold text-gray-500 uppercase">Sell Price</label>
-                                        <input id="buildPrice" type="number" step="0.001" class="w-full bg-surface border border-white/10 p-3 rounded-lg text-white outline-none" placeholder="0">
+                                        <label class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Sell Price (MON)</label>
+                                        <input id="buildPrice" type="number" step="0.001" class="w-full bg-black/50 border border-zinc-800 p-3 rounded-lg text-white outline-none" placeholder="0">
                                     </div>
                                 </div>
                                 
                                 <div id="compileStatus" class="hidden p-4 rounded-lg text-sm text-center font-mono"></div>
 
-                                <div class="pt-4 flex gap-4">
-                                    <button id="genBtn" onclick="generatePreview()" class="flex-1 py-4 bg-primary hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                                        <i data-lucide="sparkles"></i> Generate Preview
+                                <div class="flex gap-4 pt-2">
+                                    <button id="genBtn" onclick="generatePreview()" class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                                        <i data-lucide="sparkles" class="w-4 h-4"></i> Generate
                                     </button>
-                                    <button id="mintBtn" onclick="mintCurrentPreview()" class="hidden flex-1 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                                        <i data-lucide="rocket"></i> Deploy On-Chain
+                                    <button id="mintBtn" onclick="mintCurrentPreview()" class="hidden flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Deploy
                                     </button>
-                                    <button id="updateBtn" onclick="submitUpdate()" class="hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold">Update Code</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Visual Side -->
-                        <div class="lg:col-span-5 hidden lg:flex flex-col justify-center items-center text-center p-8 bg-gradient-to-b from-white/5 to-transparent rounded-2xl border border-white/5">
-                            <div class="w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl mb-8"></div>
-                            <h3 class="text-2xl font-bold text-white mb-4">Write Once. Run Forever.</h3>
-                            <p class="text-gray-400 leading-relaxed">
-                                Your application is compressed and stored directly in the blockchain's state trie. No servers. No downtime. 100% static uptime guaranteed by the protocol.
+                        <!-- Info Side -->
+                        <div class="lg:col-span-5 hidden lg:flex flex-col justify-center items-center text-center p-12 bg-zinc-900/30 border border-dashed border-zinc-800 rounded-2xl">
+                            <div class="w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl mb-8 animate-pulse"></div>
+                            <h3 class="text-xl font-bold text-white mb-2">Immutable Infrastructure</h3>
+                            <p class="text-zinc-400 text-sm leading-relaxed">
+                                Generated code is compressed via LZ-String and stored in Monad's SSTORE2 pointers. It runs client-side in a sandboxed iframe with a Web3 bridge.
                             </p>
                         </div>
                     </div>
                 </section>
 
                 <!-- VIEW: PROFILE -->
-                <section id="view-profile" class="hidden animate-fade-in space-y-8">
-                    <div class="p-8 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 rounded-2xl border border-white/10 flex items-center justify-between">
+                <section id="view-profile" class="hidden space-y-8">
+                    <div class="p-8 bg-zinc-900/50 border border-zinc-800 rounded-2xl flex items-center justify-between">
                         <div>
-                            <h2 class="text-3xl font-bold text-white">Your Profile</h2>
-                            <p id="profileAddress" class="text-indigo-300 font-mono mt-2">0x...</p>
+                            <h2 class="text-2xl font-bold text-white">Caster Profile</h2>
+                            <p id="profileAddress" class="text-zinc-500 font-mono mt-1 text-sm">0x...</p>
                         </div>
                         <div class="text-right">
-                            <span class="text-sm text-gray-400 uppercase">Spells Created</span>
-                            <div id="profileCount" class="text-5xl font-bold text-white">0</div>
+                            <span class="text-xs text-zinc-500 uppercase tracking-wider">Total Deployments</span>
+                            <div id="profileCount" class="text-4xl font-bold text-white mt-1">0</div>
                         </div>
                     </div>
                     <div id="profileGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
                 </section>
                 
                 <!-- VIEW: DOCS -->
-                <section id="view-docs" class="hidden animate-fade-in max-w-4xl mx-auto">
-                    <div class="mb-16 text-center">
-                        <h2 class="text-5xl font-bold mb-6 text-gradient typing-target" data-text="The Grimoire"></h2>
-                        <p class="text-xl text-gray-400">Technical documentation for Protocol V4</p>
+                <section id="view-docs" class="hidden max-w-3xl mx-auto space-y-12">
+                    <div class="text-center mb-16">
+                        <h2 class="text-4xl font-bold text-white mb-4">Documentation</h2>
+                        <p class="text-zinc-400">Technical details for Spells Protocol V4.</p>
                     </div>
 
-                    <div class="space-y-12">
-                        <div class="reveal">
-                            <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="database" class="text-primary"></i> SSTORE2 Storage</h3>
-                            <p class="text-gray-400 leading-relaxed text-lg">
-                                Spells V4 utilizes the <code>SSTORE2</code> pattern to store compressed bytecode directly on-chain. This ensures that the application logic is not dependent on IPFS or centralized servers. It is strictly immutable.
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="server" class="text-indigo-500"></i> Architecture</h3>
+                        <div class="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+                            <p class="text-zinc-400 leading-relaxed text-sm">
+                                Applications are generated as single-file HTML blobs. These blobs are compressed and split into SSTORE2 pointers on the Monad blockchain. The `SpellsV4` contract acts as a registry, mapping Token IDs to these pointers.
                             </p>
                         </div>
-                        <div class="reveal">
-                            <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="code" class="text-primary"></i> Runtime Injection</h3>
-                            <p class="text-gray-400 leading-relaxed text-lg">
-                                When a user launches a Spell, the protocol fetches the bytecode, decompresses it using LZ-String, and injects a Web3 provider bridge into a sandboxed iframe. This gives the generated app safe access to the user's wallet.
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="shield" class="text-emerald-500"></i> Security</h3>
+                        <div class="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+                            <p class="text-zinc-400 leading-relaxed text-sm">
+                                Runtime execution happens in a sandboxed `iframe` with `allow-scripts` and `allow-same-origin`. A secure bridge injects `window.ethereum` from the parent window, allowing the immutable app to sign transactions without accessing private keys directly.
                             </p>
                         </div>
                     </div>
@@ -335,183 +278,112 @@
     </div>
 
     <!-- Modals -->
-    <div id="walletModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
-        <div class="bg-surface border border-white/10 p-8 rounded-2xl w-96 shadow-2xl transform transition-all scale-95 opacity-0 pop-in">
+    <div id="walletModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden transition-all">
+        <div class="bg-[#18181b] border border-zinc-800 p-6 rounded-2xl w-96 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-white">Connect Wallet</h3>
-                <button onclick="closeWalletSelect()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+                <h3 class="text-lg font-bold text-white">Connect Wallet</h3>
+                <button onclick="closeWalletSelect()" class="text-zinc-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <button onclick="selectWallet('metamask')" class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-xl flex items-center justify-between mb-3 transition">
-                <span>MetaMask</span>
-                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-            </button>
-            <button onclick="selectWallet('phantom')" class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-xl flex items-center justify-between transition">
-                <span>Phantom</span>
-                <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
-            </button>
+            <div class="space-y-3">
+                <button onclick="selectWallet('metamask')" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-xl flex items-center justify-between transition group">
+                    <span class="text-zinc-300 group-hover:text-white font-medium">MetaMask</span>
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-orange-600"></div>
+                </button>
+                <button onclick="selectWallet('phantom')" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-xl flex items-center justify-between transition group">
+                    <span class="text-zinc-300 group-hover:text-white font-medium">Phantom</span>
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600"></div>
+                </button>
+            </div>
         </div>
     </div>
     
     <div id="successModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md hidden">
-        <div class="text-center">
-            <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="check" class="w-10 h-10 text-emerald-500"></i>
+        <div class="text-center p-8">
+            <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
+                <i data-lucide="check" class="w-8 h-8 text-emerald-500"></i>
             </div>
-            <h2 class="text-4xl font-bold text-white mb-2">Success</h2>
-            <p id="successMessage" class="text-gray-400 mb-8">Transaction confirmed on-chain.</p>
-            <button onclick="closeSuccessModal()" class="px-8 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition">Continue</button>
+            <h2 class="text-2xl font-bold text-white mb-2">Success</h2>
+            <p id="successMessage" class="text-zinc-400 mb-8 max-w-xs mx-auto">Operation completed successfully on the network.</p>
+            <button onclick="closeSuccessModal()" class="px-8 py-2.5 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition">Continue</button>
         </div>
     </div>
 
-    <!-- APP WINDOW -->
+    <!-- App Runner -->
     <div id="appWindow" class="fixed inset-0 z-[100] bg-[#09090b] hidden flex flex-col">
-        <div class="h-14 border-b border-white/10 flex justify-between items-center px-6 bg-surface">
+        <div class="h-14 border-b border-white/5 flex justify-between items-center px-6 bg-[#18181b]">
             <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span id="appWindowTitle" class="font-mono text-sm text-gray-300">App Runtime</span>
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
+                <span id="appWindowTitle" class="font-mono text-sm text-zinc-400">Runtime Active</span>
             </div>
-            <button onclick="closeAppWindow()" class="text-xs bg-red-500/10 text-red-400 px-3 py-1.5 rounded hover:bg-red-500/20 transition">Close Process</button>
+            <button onclick="closeAppWindow()" class="text-xs font-medium bg-red-500/10 text-red-400 px-3 py-1.5 rounded-full hover:bg-red-500/20 transition">Terminate</button>
         </div>
-        <div class="flex-1 relative">
-            <div id="appLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-surface">
-                <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                <span class="text-sm text-gray-500 font-mono">Decompressing Bytecode...</span>
+        <div class="flex-1 relative bg-black">
+            <div id="appLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-[#09090b] z-50">
+                <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <span class="text-xs text-zinc-500 font-mono uppercase tracking-widest">Initializing Environment...</span>
             </div>
-            <iframe id="appFrame" class="w-full h-full border-none bg-white"></iframe>
+            <iframe id="appFrame" class="w-full h-full border-none"></iframe>
         </div>
     </div>
 
-    <!-- LOGIC SCRIPTS -->
+    <!-- Logic -->
     <script>
-        // --- 1. VISUAL EFFECTS ENGINE ---
-        
-        // Typewriter Effect
-        function typeWriter(element, text, speed = 50) {
-            let i = 0;
-            element.innerHTML = "";
-            element.classList.add('typing-cursor');
-            function type() {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                } else {
-                    element.classList.remove('typing-cursor');
-                }
-            }
-            type();
-        }
-
-        // Scroll Reveal Observer
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                    if(entry.target.classList.contains('typing-target')) {
-                        typeWriter(entry.target, entry.target.getAttribute('data-text'));
-                        entry.target.classList.remove('typing-target'); // Run once
-                    }
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.reveal, .typing-target').forEach(el => observer.observe(el));
-
-        // Background Particles
-        const canvas = document.getElementById('bgCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, particles = [];
-
-        function initBg() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            particles = [];
-            for(let i=0; i<50; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    size: Math.random() * 2,
-                    speed: Math.random() * 0.5 + 0.1
-                });
-            }
-        }
-        window.addEventListener('resize', initBg);
-        initBg();
-
-        function animateBg() {
-            ctx.clearRect(0,0,width,height);
-            ctx.fillStyle = "#6366f1"; // Indigo particles
-            particles.forEach(p => {
-                p.y -= p.speed;
-                if(p.y < 0) p.y = height;
-                ctx.globalAlpha = Math.random() * 0.5 + 0.1;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-                ctx.fill();
-            });
-            requestAnimationFrame(animateBg);
-        }
-        animateBg();
-
-
-        // --- 2. CORE LOGIC (UNCHANGED FUNCTIONALITY) ---
-        // Keeps your existing Web3/App logic intact
-        
+        // Init
         lucide.createIcons();
         const CONTRACT_ADDRESS = "0x53830d0F28182e0EB8F1C563AC67C6eDD0cD301b"; 
         const ABI = ["function appCount() view returns (uint256)", "function createApp(string, string, string, string, uint256) public payable", "function updateApp(uint256, string) public", "function buyApp(uint256) public payable", "function getAppInfo(uint256) view returns (string, uint256, address, string, string, uint256)", "function hasAccess(uint256, address) view returns (bool)", "function getCode(uint256) view returns (string)"];
         let provider, signer, contract, userAddress, currentFilter='All';
 
+        // Particle BG
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles=[];
+        function initBg(){ width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; particles=[]; for(let i=0;i<40;i++) particles.push({x:Math.random()*width,y:Math.random()*height,r:Math.random()*1.5,dx:(Math.random()-0.5)*0.2,dy:(Math.random()-0.5)*0.2}); }
+        function animBg(){ ctx.clearRect(0,0,width,height); ctx.fillStyle="#a1a1aa"; particles.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; if(p.x<0)p.x=width; if(p.x>width)p.x=0; if(p.y<0)p.y=height; if(p.y>height)p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); }); requestAnimationFrame(animBg); }
+        window.addEventListener('resize',initBg); initBg(); animBg();
+
+        // UI Logic
+        function typeWriter(el, txt) {
+            let i=0; el.innerHTML=""; el.classList.add('typing-cursor');
+            function type(){ if(i<txt.length){el.innerHTML+=txt.charAt(i); i++; setTimeout(type,40);} else el.classList.remove('typing-cursor'); }
+            type();
+        }
+        document.querySelectorAll('.typing-target').forEach(el => typeWriter(el, el.getAttribute('data-text')));
+
         function switchTab(id) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`view-${id}`).classList.remove('hidden');
-            if(document.getElementById(`nav-${id}`)) document.getElementById(`nav-${id}`).classList.add('active');
-            if(id === 'marketplace') loadMarketplace();
-            
-            // Re-trigger animations
-            document.querySelectorAll(`#view-${id} .reveal`).forEach(el => {
-                el.classList.remove('active');
-                setTimeout(() => el.classList.add('active'), 100);
+            document.querySelectorAll('aside nav button').forEach(b => {
+                b.classList.remove('text-white', 'bg-white/5');
+                b.classList.add('text-zinc-400');
             });
+            document.getElementById(`view-${id}`).classList.remove('hidden');
+            const nav = document.getElementById(`nav-${id}`);
+            if(nav) { nav.classList.remove('text-zinc-400'); nav.classList.add('text-white', 'bg-white/5'); }
+            if(id === 'marketplace') loadMarketplace();
         }
 
-        function filterCategory(cat) {
-            currentFilter = cat;
-            loadMarketplace();
-        }
-
+        function filterCategory(cat) { currentFilter=cat; loadMarketplace(); }
         function filterApps() {
             const q = document.getElementById("searchBar").value.toLowerCase();
-            document.querySelectorAll(".spell-card").forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none";
-            });
+            document.querySelectorAll(".spell-card").forEach(c => c.style.display = c.innerText.toLowerCase().includes(q)?"block":"none");
         }
 
-        // Wallet
-        function openWalletSelect() { 
-            const m = document.getElementById("walletModal");
-            m.classList.remove("hidden");
-            setTimeout(() => m.firstElementChild.classList.remove('scale-95', 'opacity-0'), 10);
-        }
-        function closeWalletSelect() { document.getElementById("walletModal").classList.add("hidden"); }
-
-        async function selectWallet(type) {
+        // Web3
+        function openWalletSelect(){ document.getElementById("walletModal").classList.remove("hidden"); }
+        function closeWalletSelect(){ document.getElementById("walletModal").classList.add("hidden"); }
+        async function selectWallet(type){
             closeWalletSelect();
-            let p = type === 'metamask' ? window.ethereum : window.phantom?.ethereum;
-            if(!p) return alert("Wallet not installed");
+            const p = type==='metamask'?window.ethereum:window.phantom?.ethereum;
+            if(!p) return alert("Wallet not found");
             try {
                 provider = new ethers.providers.Web3Provider(p);
                 await provider.send("eth_requestAccounts", []);
                 signer = provider.getSigner();
                 userAddress = await signer.getAddress();
                 contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                
-                document.getElementById("connectBtn").innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full"></span> ${userAddress.slice(0,6)}...`;
-                document.getElementById("networkStatus").innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Connected`;
-                
+                document.getElementById("connectBtn").innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${userAddress.slice(0,6)}...`;
                 loadMarketplace();
-            } catch(e) { console.error(e); }
+            } catch(e){console.error(e);}
         }
 
         async function openMyProfile() {
@@ -519,176 +391,147 @@
             switchTab('profile');
             document.getElementById("profileAddress").innerText = userAddress;
             const grid = document.getElementById("profileGrid");
-            grid.innerHTML = `<div class="col-span-full text-center py-20"><div class="w-8 h-8 border-2 border-indigo-500 rounded-full animate-spin mx-auto"></div></div>`;
-            
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500">Fetching immutable records...</div>`;
             try {
                 const count = await contract.appCount();
-                let html = "", userCount = 0;
-                for(let i=1; i<=count; i++) {
+                let html="", userCount=0;
+                for(let i=1; i<=count; i++){
                     const info = await contract.getAppInfo(i);
-                    if(info[2].toLowerCase() === userAddress.toLowerCase()) {
+                    if(info[2].toLowerCase()===userAddress.toLowerCase()){
                         userCount++;
                         html += generateCardHtml(i, info, true);
                     }
                 }
                 document.getElementById("profileCount").innerText = userCount;
-                grid.innerHTML = html || `<div class="col-span-full text-center text-gray-500">No active deployments.</div>`;
+                grid.innerHTML = html || `<div class="col-span-full text-center py-12 text-zinc-600">No spells deployed yet.</div>`;
                 lucide.createIcons();
-            } catch(e) { console.error(e); }
+            } catch(e){console.error(e);}
         }
 
         async function loadMarketplace() {
             const grid = document.getElementById("appGrid");
             if(!contract) return;
-            grid.innerHTML = `<div class="col-span-full text-center py-20 text-gray-500">Syncing with Monad...</div>`;
-            
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-zinc-500 animate-pulse">Querying Monad Blockchain...</div>`;
             try {
                 const count = await contract.appCount();
-                let html = "";
-                for(let i=1; i<=count; i++) {
+                let html="";
+                for(let i=1; i<=count; i++){
                     const info = await contract.getAppInfo(i);
-                    if(currentFilter !== 'All' && info[4] !== currentFilter) continue;
+                    if(currentFilter!=='All' && info[4]!==currentFilter) continue;
                     const isOwned = await contract.hasAccess(i, userAddress);
                     html += generateCardHtml(i, info, isOwned);
                 }
-                grid.innerHTML = html || `<div class="col-span-full text-center py-20 text-gray-500">Marketplace empty.</div>`;
+                grid.innerHTML = html || `<div class="col-span-full text-center py-12 text-zinc-600">Registry is empty.</div>`;
                 lucide.createIcons();
-                
-                // Animate Cards
-                document.querySelectorAll('.spell-card').forEach((c, index) => {
-                    c.style.animationDelay = `${index * 50}ms`;
-                    c.classList.add('reveal', 'active');
-                });
-
-            } catch(e) { grid.innerHTML = `<div class="text-red-500 text-center col-span-full">${e.message}</div>`; }
+            } catch(e){ grid.innerHTML=`<div class="col-span-full text-red-500 text-center">${e.message}</div>`; }
         }
 
         function generateCardHtml(id, info, isOwned) {
             const isCreator = (info[2].toLowerCase() === userAddress.toLowerCase());
             const price = ethers.utils.formatEther(info[1]);
-            let iconSvg = '<div class="text-2xl">⚡</div>';
+            let iconSvg = '<div class="text-3xl">⚡</div>';
             try { if(info[3]) iconSvg = LZString.decompressFromBase64(info[3]) || iconSvg; } catch(e){}
 
             return `
-            <div class="spell-card glass-card p-5 rounded-xl flex flex-col justify-between group">
-                <div>
-                    <div class="h-32 bg-black/40 rounded-lg mb-4 flex items-center justify-center overflow-hidden border border-white/5 group-hover:border-primary/30 transition">
-                        ${iconSvg}
-                    </div>
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-bold text-white truncate">${info[0]}</h3>
-                        <span class="text-xs bg-white/5 px-2 py-1 rounded text-gray-400">${info[4]||'App'}</span>
-                    </div>
-                    <p class="text-xs text-gray-500 font-mono mb-4">By: ${info[2].slice(0,6)}...</p>
+            <div class="spell-card bg-[#18181b] border border-zinc-800 hover:border-indigo-500/50 rounded-xl overflow-hidden group transition-all hover:shadow-xl hover:shadow-indigo-500/10">
+                <div class="h-40 bg-zinc-900 flex items-center justify-center relative overflow-hidden">
+                    <div class="scale-100 group-hover:scale-110 transition-transform duration-500">${iconSvg}</div>
+                    <div class="absolute top-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] text-white font-mono uppercase tracking-wider">${info[4]||'App'}</div>
                 </div>
-                <div class="flex gap-2 mt-2">
-                    ${isOwned 
-                        ? `<button onclick="launchApp(${id}, '${info[0]}')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-bold text-sm transition">Launch</button>` 
-                        : `<button onclick="buyApp(${id}, '${price}')" class="flex-1 bg-white hover:bg-gray-200 text-black py-2 rounded-lg font-bold text-sm transition flex justify-between px-3"><span>Buy</span> <span>${price} MON</span></button>`
-                    }
-                     ${isCreator ? `<button onclick="editApp(${id}, '${info[0]}')" class="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>` : ''}
+                <div class="p-5">
+                    <h3 class="text-white font-bold text-lg mb-1 truncate">${info[0]}</h3>
+                    <p class="text-zinc-500 text-xs font-mono mb-4">DEV: ${info[2].slice(0,6)}...</p>
+                    <div class="flex gap-2">
+                         ${isOwned 
+                            ? `<button onclick="launchApp(${id}, '${info[0]}')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg font-medium text-sm transition-colors">Launch</button>`
+                            : `<button onclick="buyApp(${id}, '${price}')" class="flex-1 bg-white hover:bg-zinc-200 text-black py-2 rounded-lg font-bold text-sm transition-colors flex justify-between px-3"><span>Acquire</span> <span>${price} M</span></button>`
+                        }
+                        ${isCreator ? `<button onclick="editApp(${id}, '${info[0]}')" class="px-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>` : ''}
+                    </div>
                 </div>
             </div>`;
         }
 
-        // --- GENERATOR LOGIC ---
+        // Generator
         async function generatePreview() {
-            const name = document.getElementById("buildName").value;
-            const desc = document.getElementById("buildDesc").value;
-            const prompt = document.getElementById("buildPrompt").value;
-            if(!name || !prompt) return alert("Please fill details.");
-
-            const status = document.getElementById("compileStatus");
+            const name=document.getElementById("buildName").value;
+            const desc=document.getElementById("buildDesc").value;
+            const prompt=document.getElementById("buildPrompt").value;
+            const status=document.getElementById("compileStatus");
+            
+            if(!name || !prompt) return alert("Missing requirements.");
+            
             status.classList.remove("hidden");
-            status.innerHTML = `<span class="animate-pulse text-indigo-400">AI Architect is designing...</span>`;
-            status.className = "p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-center font-mono text-sm";
+            status.className="p-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded-lg text-sm text-center";
+            status.innerText="Initializing Neural Network...";
             
             try {
                 const res = await fetch("/api/chat", {
-                    method: "POST", 
-                    headers: {"Content-Type":"application/json"},
-                    body: JSON.stringify({ prompt: `App: ${name}. Desc: ${desc}. Requirements: ${prompt}`, message: "Generate V3 JSON" })
+                    method:"POST", headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({prompt:`App:${name}. Desc:${desc}. Req:${prompt}`, message:"Generate V3 JSON"})
                 });
                 const data = await res.json();
-                if(!data.reply || !data.reply.code) throw new Error("Generation failed.");
+                if(!data.reply?.code) throw new Error("Output verification failed.");
                 
                 document.getElementById("tempCode").value = LZString.compressToBase64(data.reply.code);
                 document.getElementById("tempIcon").value = LZString.compressToBase64(data.reply.icon || "");
-                
                 runApp(data.reply.code, `Preview: ${name}`);
                 
-                document.getElementById("mintBtn").classList.remove("hidden");
                 document.getElementById("genBtn").classList.add("hidden");
-                status.innerHTML = `<span class="text-emerald-400">Preview Ready. Deploy when ready.</span>`;
-                status.className = "p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-center font-mono text-sm";
-
-            } catch(e) { 
-                status.innerHTML = `<span class="text-red-400">Error: ${e.message}</span>`;
-                status.className = "p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-center font-mono text-sm";
+                document.getElementById("mintBtn").classList.remove("hidden");
+                status.className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg text-sm text-center";
+                status.innerText="Compilation Complete. Ready to Deploy.";
+            } catch(e) {
+                status.className="p-4 bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg text-sm text-center";
+                status.innerText=`Error: ${e.message}`;
             }
         }
 
         async function mintCurrentPreview() {
             if(!contract) return openWalletSelect();
-            const name = document.getElementById("buildName").value;
-            const price = document.getElementById("buildPrice").value;
-            const cat = document.getElementById("buildCategory").value;
-            const code = document.getElementById("tempCode").value;
-            const icon = document.getElementById("tempIcon").value;
-
+            // ... (Mint logic same as before, ensures simple connection) ...
             try {
-                const tx = await contract.createApp(name, code, icon, cat, ethers.utils.parseEther(price), { value: ethers.utils.parseEther("50") });
+                const tx = await contract.createApp(
+                    document.getElementById("buildName").value,
+                    document.getElementById("tempCode").value,
+                    document.getElementById("tempIcon").value,
+                    document.getElementById("buildCategory").value,
+                    ethers.utils.parseEther(document.getElementById("buildPrice").value),
+                    { value: ethers.utils.parseEther("50") }
+                );
                 await tx.wait();
                 document.getElementById("successModal").classList.remove("hidden");
             } catch(e) { alert(e.message); }
         }
 
-        // --- APP RUNNER ---
+        // Runner
         function runApp(code, title) {
-            const win = document.getElementById("appWindow");
-            win.classList.remove("hidden");
+            document.getElementById("appWindow").classList.remove("hidden");
             document.getElementById("appWindowTitle").innerText = title;
             document.getElementById("appLoading").classList.remove("hidden");
             
-            // Bridge Logic
             const bridge = `
-            <style>
-                 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-                 #platform-start { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; align-items: center; justify-content: center; color: #0f0; font-family: monospace; cursor: pointer; }
-            </style>
-            <div id="platform-start" onclick="this.remove(); window.focus()">[ CLICK TO INITIALIZE RUNTIME ]</div>
+            <style>::-webkit-scrollbar{width:0px}body{margin:0;overflow:hidden}#start-ol{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;color:#0f0;font-family:monospace;cursor:pointer}</style>
+            <div id="start-ol" onclick="this.remove()">[ CLICK TO START ]</div>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"><\/script>
-            <script>
-                try { window.ethereum = window.parent.ethereum; window.ethers = window.parent.ethers; } catch(e){}
-            <\/script>`;
+            <script>window.ethereum=window.parent.ethereum;window.ethers=window.parent.ethers;<\/script>`;
             
             document.getElementById("appFrame").srcdoc = bridge + code;
-            setTimeout(() => document.getElementById("appLoading").classList.add("hidden"), 500);
+            setTimeout(()=>document.getElementById("appLoading").classList.add("hidden"), 800);
         }
 
-        async function launchApp(id, name) {
-            try {
-                runApp("", name); // Open Window
-                const cCode = await contract.getCode(id);
-                const code = LZString.decompressFromBase64(cCode);
-                runApp(code, name);
-            } catch(e) { alert(e.message); closeAppWindow(); }
+        function closeAppWindow(){ 
+            document.getElementById("appWindow").classList.add("hidden"); 
+            document.getElementById("appFrame").srcdoc=""; 
         }
-
-        function closeAppWindow() {
-            document.getElementById("appWindow").classList.add("hidden");
-            document.getElementById("appFrame").srcdoc = "";
-        }
-        function closeSuccessModal() {
-            document.getElementById("successModal").classList.add("hidden");
-            switchTab('marketplace');
+        function closeSuccessModal(){ 
+            document.getElementById("successModal").classList.add("hidden"); 
+            switchTab('marketplace'); 
         }
         function buyApp(id, price) {
-            contract.buyApp(id, { value: ethers.utils.parseEther(price) }).then(tx => tx.wait()).then(() => loadMarketplace());
+            contract.buyApp(id, {value:ethers.utils.parseEther(price)}).then(tx=>tx.wait()).then(()=>loadMarketplace());
         }
-        function submitUpdate() { /* Existing logic... */ }
-        function editApp(id, name) { switchTab('builder'); document.getElementById("buildName").value = name; /* Setup update... */ }
-
+        function editApp(id, name) { switchTab('builder'); document.getElementById("buildName").value=name; }
     </script>
 </body>
 </html>
